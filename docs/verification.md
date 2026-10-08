@@ -18,6 +18,14 @@ python3 client.py
 
 2026-10-08 13:27 CST，Mac 以未追蹤的 `.env` 指向 Windows 私人網路端點，執行 `python3 -B client.py`。`GET /api/tags` 逾時，CLI 回報 `TRANSPORT_ERROR`、exit code 3；以 5 秒逾時重試 `/api/tags` 仍逾時。此結果**未證明 Mac → Windows 連通**。Windows 本機 API 的成功紀錄見下節；跨機監聽與防火牆設定仍需確認。
 
+2026-10-08 13:35 CST，Windows 開放此 Mac 的連線後，Mac 再次執行：
+
+```sh
+python3 -B client.py --timeout 120
+```
+
+CLI 先收到 `/api/tags` 的模型清單，再由 `/api/generate` 收到 `GENERATED HTTP 200`，exit code 0；模型 `tinyllama:latest`，回覆為非空文字（開頭 `Hi!`）。**Mac → Windows Ollama 跨機 Request 已通過。**實際 Windows 位址僅存於未追蹤的 `.env`，未寫入本紀錄。
+
 ## Human check
 
 repo 已由使用者移至 GitHub Public。後續推送前，檢查跨機實測結果、重現步驟及 Git diff，確認沒有 Windows 的實際私人 IP 或其他私密資料。
@@ -34,7 +42,7 @@ repo 已由使用者移至 GitHub Public。後續推送前，檢查跨機實測�
 - Windows 本機 `POST /api/generate`：HTTP 200；`model=tinyllama:latest`、`prompt=Reply with one short greeting.`、`stream=false`。收到非空回覆 `Hi there!`，`done=true`。
 - 安裝前 WSL CLI `python3 client.py --timeout 5`：`TRANSPORT_ERROR`，exit code 3，不能視為連通。
 - WSL 為 NAT 模式；Windows 本機 API 推論成功不代表 WSL CLI 或 Mac 跨機連通成功。WSL CLI 直連驗證需另行允許暫時監聽 WSL 虛擬網路介面。
-- 未變更程式碼、持久環境變數或防火牆規則。Mac → Windows 仍待 human check 與網路設定。
+- 該次 Windows 本機驗證未變更程式碼、持久環境變數或防火牆規則；後續跨機結果見上節。
 
 ### Windows 本機 Human check
 
