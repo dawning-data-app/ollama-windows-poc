@@ -16,11 +16,11 @@ python3 client.py
 
 ## Mac → Windows
 
-待 Windows 主機安裝與網路設定完成後執行。尚未證明跨機連通。
+2026-10-08 13:27 CST，Mac 以未追蹤的 `.env` 指向 Windows 私人網路端點，執行 `python3 -B client.py`。`GET /api/tags` 逾時，CLI 回報 `TRANSPORT_ERROR`、exit code 3；以 5 秒逾時重試 `/api/tags` 仍逾時。此結果**未證明 Mac → Windows 連通**。Windows 本機 API 的成功紀錄見下節；跨機監聽與防火牆設定仍需確認。
 
 ## Human check
 
-檢查 Windows 實測結果、重現步驟及預計公開的 Git diff，之後才發布 GitHub Public repo。
+repo 已由使用者移至 GitHub Public。後續推送前，檢查跨機實測結果、重現步驟及 Git diff，確認沒有 Windows 的實際私人 IP 或其他私密資料。
 
 ## Windows 本機自身驗證
 
