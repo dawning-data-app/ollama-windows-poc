@@ -29,8 +29,20 @@ python3 client.py
    Invoke-RestMethod -Uri http://127.0.0.1:11434/api/tags
    ```
 
-3. 在使用者環境變數設定 `OLLAMA_HOST=0.0.0.0:11434`。從系統匣**完全結束** Ollama，再從開始功能表啟動，讓新設定生效。以 `ipconfig` 找出 Windows 在私人網路的 IPv4 位址。[Ollama 網路設定](https://docs.ollama.com/faq#how-can-i-expose-ollama-on-my-network)
-4. 在 Windows 防火牆新增 TCP 11434 輸入規則，僅允許 Mac 的 IPv4 位址，且只套用 Private 網路設定檔。不要把此埠轉送到網際網路；[Ollama 本機 API 不要求驗證](https://docs.ollama.com/api/authentication)。
+3. 在 PowerShell 設定使用者環境變數，然後從系統匣**完全結束** Ollama，再從開始功能表啟動，讓新設定生效。以 `ipconfig` 找出 Windows 在私人網路的 IPv4 位址。[Ollama 網路設定](https://docs.ollama.com/faq#how-can-i-expose-ollama-on-my-network)
+
+   ```powershell
+   [Environment]::SetEnvironmentVariable('OLLAMA_HOST', '0.0.0.0:11434', 'User')
+   ipconfig
+   ```
+
+4. 先找出 Mac 的私人 IPv4 位址，再以**系統管理員 PowerShell** 在 Windows 防火牆新增輸入規則。把範例位址換成 Mac 的實際位址；此規則僅套用 Private 網路設定檔。
+
+   ```powershell
+   New-NetFirewallRule -DisplayName 'Ollama POC from Mac' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 11434 -RemoteAddress 192.168.1.20 -Profile Private
+   ```
+
+   不要把此埠轉送到網際網路；[Ollama 本機 API 不要求驗證](https://docs.ollama.com/api/authentication)。
 5. 從 Mac 執行，將範例 IP 換成 Windows 的實際私人 IP：
 
    ```sh
