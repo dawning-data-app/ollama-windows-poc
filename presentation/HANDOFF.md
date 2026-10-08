@@ -13,8 +13,8 @@
 
 已渲染並逐頁檢查三頁的文字、比例與可讀性。PPTX 結構、版面與重新匯入驗證通過；另檢查文字、備註、中繼資料與內嵌媒體，未發現原始私人 IP 或主機名稱、憑證或完整日誌。內嵌媒體只有原始 Mac 圖與遮蔽後 Windows 圖，Mac 圖的位元組保持一致。
 
-本次 Mac 跨機排練仍待完成，不能將歷史成功紀錄當成本次排練通過。Windows 原生 `.\scripts\windows-local.ps1 -Action All` 的 human check 也仍待完成，與此次展示證據分開記錄。
+依使用者確認，Mac 圖所記錄的操作直接呼叫此 Windows Ollama，屬於已完成的跨機實際操作。客戶展示前建議再排練一次；這是展示準備建議，不代表缺少跨機實跑證據。Windows 原生 `.\scripts\windows-local.ps1 -Action All` 的 human check 也仍待完成，與此次展示證據分開記錄。
 
 1. 用 PowerPoint 開啟 v4，確認三頁顯示正常、文字可編輯、兩張證據圖可讀。
 2. 由 Mac 操作者核對目標後執行 `python3 -B client.py --timeout 120`，確認 `GENERATED HTTP 200`、非空回覆及 exit code 0。
-3. 完成本次跨機排練後再決定客戶展示；若需視窗直拍，由操作者另行擷取並永久遮蔽敏感資訊。
+3. 再次排練並確認現場環境後再決定客戶展示；若需視窗直拍，由操作者另行擷取並永久遮蔽敏感資訊。
