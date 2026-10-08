@@ -8,6 +8,17 @@
 - `OLLAMA_API_ERROR`：收到 Ollama 的 JSON `error` 與 HTTP 狀態碼，證明請求到達 Ollama，但生成失敗。
 - `TRANSPORT_ERROR`、`INVALID_RESPONSE`：連線、逾時或非 Ollama 回應，**不算**跨機連通。
 
+## Windows 本機快速開始
+
+Windows 從 Git / clone、安裝、測試到本機推論，請依 [Windows 本機教程](docs/windows-local-guide.md)。取得 repo 後執行：
+
+~~~powershell
+.\scripts\windows-local.ps1 -Action All
+$LASTEXITCODE
+~~~
+
+Setup 會安裝缺少的軟體並下載模型；已有安裝沿用。All 依序執行建置、測試與推論，任何階段失敗立即停止。也可用 `-Action Setup`、`Test`、`Verify` 分階段執行。腳本固定驗證 Windows 本機，會覆蓋 `.env` 的遠端端點。
+
 ## 1. Mac 本機
 
 安裝並啟動 [Ollama for macOS](https://ollama.com/download/mac)；已安裝者直接啟動應用程式。接著在 Terminal 執行：
