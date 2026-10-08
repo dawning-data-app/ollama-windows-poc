@@ -1,7 +1,9 @@
 import contextlib
 import io
 import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 from urllib import error
 
@@ -70,6 +72,24 @@ class ClientTests(unittest.TestCase):
         with mock.patch.object(client, "_open", return_value=fake_response):
             with self.assertRaises(client.InvalidResponse):
                 client._json_request("http://127.0.0.1:11434/api/tags", 5)
+
+    def test_reads_only_base_url_from_env_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".env"
+            path.write_text("# local settings\nOTHER=value\nOLLAMA_BASE_URL=http://host.example:11434\n")
+            self.assertEqual(client._env_base_url(path), "http://host.example:11434")
+
+    def test_cli_url_overrides_env_file(self):
+        with mock.patch.object(client, "_env_base_url", return_value="http://from-env:11434"):
+            with mock.patch.object(client, "run", return_value=0) as run:
+                self.assertEqual(client.main(["--base-url", "http://override:11434"]), 0)
+        self.assertEqual(run.call_args.args[0], "http://override:11434")
+
+    def test_env_file_sets_default_url(self):
+        with mock.patch.object(client, "_env_base_url", return_value="http://from-env:11434"):
+            with mock.patch.object(client, "run", return_value=0) as run:
+                self.assertEqual(client.main([]), 0)
+        self.assertEqual(run.call_args.args[0], "http://from-env:11434")
 
 
 if __name__ == "__main__":

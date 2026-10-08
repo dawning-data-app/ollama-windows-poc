@@ -4,6 +4,7 @@ import argparse
 import json
 import socket
 import sys
+from pathlib import Path
 from urllib import error, parse, request
 
 
@@ -68,6 +69,20 @@ def _base_url(value):
     return value.rstrip("/")
 
 
+def _env_base_url(path=None):
+    """Read only OLLAMA_BASE_URL from the local, untracked .env file."""
+    env_path = path or Path(__file__).resolve().with_name(".env")
+    try:
+        lines = env_path.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return None
+    for line in lines:
+        key, separator, value = line.strip().partition("=")
+        if separator and key == "OLLAMA_BASE_URL":
+            return value.strip().strip('"\'')
+    return None
+
+
 def run(base_url, model, prompt, timeout):
     try:
         tags_status, tags = _json_request(f"{base_url}/api/tags", timeout)
@@ -100,14 +115,18 @@ def run(base_url, model, prompt, timeout):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base-url", type=_base_url, default="http://127.0.0.1:11434")
+    parser.add_argument("--base-url", type=_base_url, help="overrides OLLAMA_BASE_URL in .env")
     parser.add_argument("--model", default="tinyllama:latest")
     parser.add_argument("--prompt", default="Reply with one short greeting.")
     parser.add_argument("--timeout", type=float, default=120.0, help="timeout in seconds per request")
     args = parser.parse_args(argv)
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
-    return run(args.base_url, args.model, args.prompt, args.timeout)
+    try:
+        base_url = args.base_url or _base_url(_env_base_url() or "http://127.0.0.1:11434")
+    except (OSError, UnicodeError, argparse.ArgumentTypeError) as exc:
+        parser.error(f"invalid .env: {exc}")
+    return run(base_url, args.model, args.prompt, args.timeout)
 
 
 if __name__ == "__main__":
