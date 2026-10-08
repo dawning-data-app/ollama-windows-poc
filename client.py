@@ -4,8 +4,30 @@ import argparse
 import json
 import socket
 import sys
+from http.client import HTTPResponse
 from pathlib import Path
+from typing import Literal, Optional, Sequence, Union, cast
 from urllib import error, parse, request
+
+
+# JSON 解碼邊界保留任意欄位；型別別名不代表固定的 Ollama response schema。
+JsonValue = Union[
+    None, bool, int, float, str, list["JsonValue"], dict[str, "JsonValue"]
+]
+JsonObject = dict[str, JsonValue]
+# HTTP 狀態碼與已確認為 object 的 JSON body。
+HttpResult = tuple[int, JsonObject]
+# 0：生成成功；2：Ollama API 錯誤；3：傳輸或回應格式錯誤。
+ExitCode = Literal[0, 2, 3]
+
+
+class _CliArguments(argparse.Namespace):
+    """由 ArgumentParser 填入的 CLI 欄位；型別與各 argument 定義一致。"""
+
+    base_url: Optional[str]
+    model: str
+    prompt: str
+    timeout: float
 
 
 class TransportError(Exception):
@@ -16,13 +38,15 @@ class InvalidResponse(Exception):
     pass
 
 
-def _open(req, timeout):
+def _open(req: request.Request, timeout: float) -> HTTPResponse:
     # A local or LAN Ollama request should not use a configured HTTP proxy.
     return request.build_opener(request.ProxyHandler({})).open(req, timeout=timeout)
 
 
-def _json_request(url, timeout, payload=None):
-    data = json.dumps(payload).encode("utf-8") if payload is not None else None
+def _json_request(
+    url: str, timeout: float, payload: Optional[JsonObject] = None
+) -> HttpResult:
+    data: Optional[bytes] = json.dumps(payload).encode("utf-8") if payload is not None else None
     req = request.Request(
         url,
         data=data,
@@ -40,15 +64,16 @@ def _json_request(url, timeout, payload=None):
         raise TransportError(str(exc)) from exc
 
     try:
-        result = json.loads(body.decode("utf-8"))
+        result: object = json.loads(body.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise InvalidResponse("response is not valid JSON") from exc
     if not isinstance(result, dict):
         raise InvalidResponse("response is not a JSON object")
-    return status, result
+    # json.loads 產生 JSON 值；上方已確認最外層為 object。
+    return status, cast(JsonObject, result)
 
 
-def _base_url(value):
+def _base_url(value: str) -> str:
     parsed = parse.urlsplit(value)
     if (
         parsed.scheme != "http"
@@ -69,7 +94,7 @@ def _base_url(value):
     return value.rstrip("/")
 
 
-def _env_base_url(path=None):
+def _env_base_url(path: Optional[Path] = None) -> Optional[str]:
     """Read only OLLAMA_BASE_URL from the local, untracked .env file."""
     env_path = path or Path(__file__).resolve().with_name(".env")
     try:
@@ -83,7 +108,7 @@ def _env_base_url(path=None):
     return None
 
 
-def run(base_url, model, prompt, timeout):
+def run(base_url: str, model: str, prompt: str, timeout: float) -> ExitCode:
     try:
         tags_status, tags = _json_request(f"{base_url}/api/tags", timeout)
         if tags_status != 200 or not isinstance(tags.get("models"), list):
@@ -113,13 +138,14 @@ def run(base_url, model, prompt, timeout):
     return 3
 
 
-def main(argv=None):
+def main(argv: Optional[Sequence[str]] = None) -> ExitCode:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", type=_base_url, help="overrides OLLAMA_BASE_URL in .env")
     parser.add_argument("--model", default="tinyllama:latest")
     parser.add_argument("--prompt", default="Reply with one short greeting.")
     parser.add_argument("--timeout", type=float, default=120.0, help="timeout in seconds per request")
-    args = parser.parse_args(argv)
+    args = _CliArguments()
+    parser.parse_args(argv, namespace=args)
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
     try:
