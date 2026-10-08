@@ -4,7 +4,15 @@
 
 ## Mac 本機
 
-待執行。
+2026-10-08 11:32 CST；Ollama `0.31.1`，模型 `tinyllama:latest`。
+
+```sh
+python3 client.py
+```
+
+結果：`GENERATED HTTP 200`，取得非空文字回應（開頭為 `Hi!`）。Mac 本機 API 請求成功。
+
+離線測試：`python3 -m unittest discover -s tests -v`，7 個測試通過。
 
 ## Mac → Windows
 
