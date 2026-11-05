@@ -52,7 +52,7 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 
 本輪 POC unittest 17/17，新增測試防止部分回覆、錯誤 route 或改寫鎖檔被當成通過。既有根目錄 10 項在基準已通過，本輪已重跑通過。tinyllama CLI／腳本／測試／簡報未改動。
 
-Archify [增量架構圖](../diagrams/extensions.html) 已通過 showcase 9/9、0 errors／0 warnings，來源 revision 709dd44；四種 desktop viewport 無 overflow，四張明暗截圖已實際檢視並記錄 visual review passed，詳見 [receipt](../diagrams/extensions.receipt.json)。繁中內容的固定 Viewer UI／html lang 回退英文。原基準圖保留。Graphify 無既有可用 graph，採定點讀碼，未建圖。PR Lens 將依最終真實 base/head 在 repo 外更新、validate/render，不上傳圖件；GitHub Draft PR 由使用者另行授權更新。
+Archify [隔離後增量架構圖](../diagrams/extensions-isolated.html) 已通過 showcase 9/9、0 errors／0 warnings，來源 revision d2399f0；四種 desktop viewport 無 overflow，四張明暗截圖已實際檢視並記錄 visual review passed，詳見 [receipt](../diagrams/extensions-isolated.receipt.json)。繁中內容的固定 Viewer UI／html lang 回退英文。原基準圖保留。Graphify 無既有可用 graph，採定點讀碼，未建圖。PR Lens 將依最終真實 base/head 在 repo 外更新、validate/render，不上傳圖件；GitHub Draft PR 由使用者另行授權更新。
 
 原始 session/export、user context、模型／程序／工具證據留在本機暫存 `local-excel-extensions`，repo 只提交可公開摘要。核對器固定 `e2e_passed: false`，還需獨立人工驗收。原 extension helper 並非 OS sandbox；missing 已證明僅分離資料夾無法阻止跨 session 探索。本輪僅使用合成資料，E004 後新 run 套用 OS profile，舊無隔離 run 仍拒絕啟動，沒有無隔離 fallback。UI 最終回覆及程式品質的已知限制會依觀察補記，不以 exit 0 冒充完整成功。
 

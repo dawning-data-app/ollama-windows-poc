@@ -81,6 +81,6 @@ capture 保存原始 session JSON、所有 user parts（含檔案與 synthetic c
 
 CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀錄。Mac 人工驗收後才處理 Windows。
 
-兩種入口與共用本機 backend 的 [Archify 架構圖](../diagrams/extensions.html)／[receipt](../diagrams/extensions.receipt.json) 用於理解流程，不能代替各介面 E2E 證據。
+兩種入口與共用本機 backend 的 [Archify 隔離架構圖](../diagrams/extensions-isolated.html)／[receipt](../diagrams/extensions-isolated.receipt.json) 用於理解流程，不能代替各介面 E2E 證據。
 
 隔離驗證的 runtime 限制：OpenCode 1.19.5 曾嘗試背景 npm dependency install，被網路規則阻擋並記 warning；目前已實測的工具鏈仍可完成。這不代表有雲端模型推論。API server 不設定 password，只綁 loopback，測試後停止該次 PID；不提供遠端存取。
