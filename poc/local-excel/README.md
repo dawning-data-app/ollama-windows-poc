@@ -2,13 +2,15 @@
 
 在 VS Code 的 OpenCode 對話提供資料夾路徑，由 Ollama 的本機 Qwen 自主寫 Python、讀 Excel 並計算。先驗收 Mac，再以同一模型 digest、資料與 uv 鎖檔到原生 Windows 重現。既有 tinyllama CLI 不變。
 
+本次預設候選已選為 `qwen3.5:9b`；[實測紀錄與待驗證項目](docs/verification.md)。
+
 這是可核對的最小情境：12 筆合成銷售資料，不代表大型或髒資料的效能評估。`poc.py` 只準備環境與核對結果，不替受測代理提供分析程式。
 
 本機互動流程圖：[workflow.html](diagrams/workflow.html)；[驗證 receipt](diagrams/receipt.json)。圖件是流程說明，不是 E2E 通過證據。
 
 ## 受測 profile
 
-使用專用 `excel` primary agent，明確告知 openpyxl 已安裝，但不提供分析程式或標準答案。主／輔模型都是本機同一 Qwen。採 thinking coding profile：temperature 0.6、top_p 0.95、top_k 20、min_p 0、presence_penalty 0、repeat_penalty 1；OpenCode 宣告 reasoning 與 `reasoning_content` replay。[Qwen 官方 coding 建議](https://huggingface.co/Qwen/Qwen3.5-4B#best-practices)。診斷過程使用過的預設／non-thinking profile 分開留證，不算這組配置通過。
+使用專用 `excel` primary agent，明確告知 openpyxl 已安裝，但不提供分析程式或標準答案。主／輔模型都是本機同一 Qwen。採 coding sampler：temperature 0.6、top_p 0.95、top_k 20、min_p 0、presence_penalty 0、repeat_penalty 1；OpenCode 宣告 reasoning 能力與 `reasoning_content` replay，並以 `reasoningEffort: none` 關閉本次對話的 thinking。這個模式組合是本 POC 的測試選擇，採樣數值參照官方 coding 建議。[Qwen 官方 coding 建議](https://huggingface.co/Qwen/Qwen3.5-4B#best-practices)。診斷過程使用過的預設、未調整採樣的 non-thinking 及 thinking profile 分開留證，不算這組配置通過。
 
 執行器用 `uv run --locked --offline` 啟動 OpenCode，並把該 session 的 `.venv` 放在 PATH 首位，因此代理的 `python ...` 短命令也使用該次 uv 環境。`evidence/python-runtime.stdout` 記錄實際 interpreter；不依賴全域 openpyxl。推薦分析命令仍是 `uv run --locked --offline python analysis.py`。
 
@@ -23,7 +25,7 @@ cd <feature-worktree>/poc/local-excel
 code .
 uv sync --locked
 npm install --prefix /private/tmp/local-excel-poc/opencode opencode-ai@1.19.5 --no-audit --no-fund
-ollama pull qwen3.5:4b-q4_K_M
+ollama pull qwen3.5:9b
 ```
 
 這裡的 OpenCode 僅安裝到暫存工具目錄。固定 Python 3.12.12、openpyxl 3.1.5，uv 鎖檔也會複製至受測 session。不要把其他分析腳本、oracle 或過往回答複製進去。
@@ -36,9 +38,9 @@ OpenCode 模型宣告的 `limit.context` **不會**自動設定 Ollama 的執行
 
 ```sh
 ollama list
-ollama stop qwen3.5:4b-q4_K_M
+ollama stop qwen3.5:9b
 cat > /private/tmp/local-excel-poc/Modelfile <<'MODEL'
-FROM qwen3.5:4b-q4_K_M
+FROM qwen3.5:9b
 PARAMETER num_ctx 65536
 PARAMETER temperature 0.6
 PARAMETER top_p 0.95
@@ -47,7 +49,7 @@ PARAMETER min_p 0
 PARAMETER presence_penalty 0
 PARAMETER repeat_penalty 1
 MODEL
-ollama create qwen3.5:4b-q4_K_M -f /private/tmp/local-excel-poc/Modelfile
+ollama create qwen3.5:9b -f /private/tmp/local-excel-poc/Modelfile
 ollama list
 ```
 
@@ -64,7 +66,7 @@ uv run --locked python poc.py preflight --output /private/tmp/local-excel-poc/qu
 ollama ps
 ```
 
-資格檢查會驗證本機模型、tools capability、最小工具呼叫及實際 65536 context。失敗就停該階段；不切雲端、不降 context。4b 若工具／正確性不足，且資源允許，才試 `qwen3.5:9b`，全部測試重新開始。
+資格檢查會驗證本機模型、tools capability、最小工具呼叫及實際 65536 context。失敗就停該階段；不切雲端、不降 context。本次依原先的 4b → 9b 篩選順序選用 9b；4b 未達完整對話重現門檻。9b 已完成三次 CLI 重現，GUI 與 Windows 狀態另見驗證紀錄。若要重測 4b，先為該 tag 準備相同參數，再用 `prepare --model qwen3.5:4b-q4_K_M`，結果分開記錄。
 
 ## 3. VS Code 對話操作
 
@@ -77,13 +79,15 @@ uv run --locked python poc.py prepare
 輸出是一個全新 run 目錄，例如 `/private/tmp/local-excel-poc/runs/<run-id>`；實際系統暫存根目錄可能不同。把它存成 `$Run`，再啟動受控的 OpenCode TUI：
 
 ```sh
-Run=<上一步輸出的完整run目錄>
+Run="<上一步輸出的完整run目錄>"
+cat "$Run/workspace/prompt.txt"
+# 先複製這份提示，再啟動 TUI 並貼上
 uv run --locked python poc.py tui "$Run" --opencode /private/tmp/local-excel-poc/opencode/node_modules/.bin/opencode
 ```
 
 啟動器先核對設定，在終端印出本次完整提示。進入 OpenCode 後，貼上該提示：請分析 workspace 內「銷售 資料」資料夾，計算總額、月額與區域排名。代理必須自行寫 `analysis.py`，並真正執行 `uv run --locked --offline python analysis.py`。
 
-`answer.json` 是機器核對用證據，不是額外交付的報表產品。對話中也要有繁體中文的結果。保存 session ID、畫面及工具軌跡供人核對；`tui` 狀態是 `interactive-needs-review`，不會自動宣稱 E2E 通過。
+`answer.json` 是機器核對用證據，不是額外交付的報表產品。對話中也要有繁體中文的結果。若終端暫時空白，可先按 Ctrl+L 重新繪製；不要盲目重送提示。保存 session ID、畫面及工具軌跡供人核對；`tui` 狀態是 `interactive-needs-review`，不會自動宣稱 E2E 通過。
 
 ## 4. 三次可重跑的 CLI 驗證
 
@@ -91,14 +95,14 @@ uv run --locked python poc.py tui "$Run" --opencode /private/tmp/local-excel-poc
 
 ```sh
 uv run --locked python poc.py prepare
-Run=<本次輸出的完整run目錄>
+Run="<本次輸出的完整run目錄>"
 uv run --locked python poc.py run "$Run" --opencode /private/tmp/local-excel-poc/opencode/node_modules/.bin/opencode
 uv run --locked python poc.py check "$Run"
 ```
 
 共做三次 sales；每次使用新的 run，不使用 `--continue`，不重用生成的程式。`run` 先 `uv sync --locked`，然後代理執行時不新增依賴。`--timeout 900` 是避免失控等待的操作上限，不是效能合格線。
 
-再分別 `prepare --case missing` 與 `prepare --case corrupt`，同樣 run/check。核對錯誤敘述且沒有編造結果。負面案例的敘述需人審，check 不會自動判定其通過。
+再分別 `prepare --case missing` 與 `prepare --case corrupt`，同樣 run/check。核對錯誤敘述且沒有編造結果。不存在的資料夾可在導覽時直接報錯，不要求為失敗輸入建立分析腳本。負面案例的敘述需人審，check 不會自動判定其通過。
 
 `check` 僅能判定數值及部分工具證據；成功時仍是 `needs-review`、`e2e_passed: false`。測試者還須檢視生成程式確實讀 XLSX、程式執行輸出、主／輔模型身份與路由、答案未污染、實際 VS Code 操作；完成後另記錄人審結論。工作區分開不等於 OS sandbox，Python 仍有本機程式權限，僅測公開合成資料。
 
@@ -112,7 +116,7 @@ uv sync --locked
 $ToolRoot = Join-Path $env:TEMP 'local-excel-poc\opencode'
 npm install --prefix $ToolRoot opencode-ai@1.19.5 --no-audit --no-fund
 $OpenCode = Join-Path $ToolRoot 'node_modules\.bin\opencode.cmd'
-ollama pull qwen3.5:4b-q4_K_M
+ollama pull qwen3.5:9b
 # 完全結束原 Ollama 後，於另一個 PowerShell 啟動：
 $env:OLLAMA_HOST = '127.0.0.1:11434'
 $env:OLLAMA_CONTEXT_LENGTH = '65536'
@@ -124,9 +128,9 @@ ollama serve
 
 ```powershell
 $ModelFile = Join-Path $env:TEMP 'local-excel-poc\Modelfile'
-ollama stop qwen3.5:4b-q4_K_M
+ollama stop qwen3.5:9b
 @'
-FROM qwen3.5:4b-q4_K_M
+FROM qwen3.5:9b
 PARAMETER num_ctx 65536
 PARAMETER temperature 0.6
 PARAMETER top_p 0.95
@@ -135,7 +139,7 @@ PARAMETER min_p 0
 PARAMETER presence_penalty 0
 PARAMETER repeat_penalty 1
 '@ | Set-Content -Encoding ascii $ModelFile
-ollama create qwen3.5:4b-q4_K_M -f $ModelFile
+ollama create qwen3.5:9b -f $ModelFile
 ollama list
 ```
 
@@ -145,6 +149,8 @@ ollama list
 $RunRoot = Join-Path $env:TEMP 'local-excel-poc\runs'
 uv run --locked python poc.py preflight --output (Join-Path $RunRoot 'qualification.json')
 $Run = uv run --locked python poc.py prepare --runs-root $RunRoot
+Get-Content -Raw -Encoding utf8 (Join-Path $Run 'workspace\prompt.txt')
+# 先複製完整提示；進入 TUI 後貼上並送出
 uv run --locked python poc.py tui $Run --opencode $OpenCode
 # CLI 三次驗證，每次重新 prepare：
 $Run = uv run --locked python poc.py prepare --runs-root $RunRoot
