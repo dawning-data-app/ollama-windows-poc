@@ -24,7 +24,9 @@ import uuid
 from openpyxl import Workbook
 
 ROOT = Path(__file__).resolve().parent
-MODEL = "qwen3.5:4b-q4_K_M"
+REPO_ROOT = ROOT.parents[1]
+CANDIDATE_MODELS = ("qwen3.5:4b-q4_K_M", "qwen3.5:9b")
+MODEL = "qwen3.5:9b"  # Selected after the Mac CLI reproduction checks.
 CONTEXT = 65536
 BASE_URL = "http://localhost:11434"
 
@@ -85,6 +87,7 @@ def config(model: str) -> dict:
             "options": {"baseURL": BASE_URL + "/v1"},
             "models": {model: {"name": model, "tool_call": True,
                                "reasoning": True, "interleaved": {"field": "reasoning_content"},
+                               "options": {"reasoningEffort": "none"},
                                "limit": {"context": CONTEXT, "output": 8192}}},
         }},
         "default_agent": "excel",
@@ -97,7 +100,7 @@ def config(model: str) -> dict:
             "edit": "allow", "external_directory": "deny",
             "bash": {"*": "deny", "pwd": "allow", "ls": "allow", "ls *": "allow",
                      "find *": "allow", "head *": "allow", "cd *": "allow", "cat *": "allow", "echo *": "allow", "true": "allow",
-                     "uv run --locked --offline python *": "allow", "python *": "allow"},
+                     "uv run --locked --offline python *": "allow", "python *": "allow", "python3 *": "allow"},
         },
     }
 
@@ -119,8 +122,8 @@ def prompt(folder: Path, negative: bool = False) -> str:
 def prepare(runs_root: Path, case: str = "sales", model: str = MODEL) -> Path:
     runs_root = runs_root.resolve()
     # Evaluation assets must never become descendants of an agent workspace.
-    if runs_root == ROOT or ROOT in runs_root.parents:
-        raise ValueError("runs-root must be outside the tracked POC assets")
+    if runs_root == REPO_ROOT or REPO_ROOT in runs_root.parents:
+        raise ValueError("runs-root must be outside the repository")
     run = runs_root / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + uuid.uuid4().hex[:8])
     workspace = run / "workspace"
     workspace.mkdir(parents=True)
@@ -247,7 +250,7 @@ def run_agent(run: Path, opencode: str, timeout: float) -> dict:
         for name, argv in (("uv-version", ["uv", "--version"]),
                            ("opencode-version", [binary, "--version"]),
                            ("uv-sync", ["uv", "sync", "--locked", "--python", "3.12.12"]),
-                           ("python-runtime", ["uv", "run", "--locked", "--offline", "python", "-c", "import sys; print(sys.executable)"]),
+                           ("python-runtime", ["uv", "run", "--locked", "--offline", "python", "-c", "import sys,shutil; print(sys.executable); print(shutil.which('python3') or '')"]),
                            ("effective-config", [binary, "debug", "config"])):
             if command(argv, run, name, 180, setup_environment() if name == "uv-sync" else env).returncode:
                 raise ValueError(f"{name} failed; see evaluator evidence")
@@ -337,16 +340,31 @@ def check(run: Path) -> dict:
     runtime_file = run / "evidence" / "python-runtime.stdout"
     if not runtime_file.is_file() or str(workspace / ".venv") not in runtime_file.read_text(encoding="utf-8"):
         errors.append("session uv Python interpreter not confirmed")
-    if not executions:
-        errors.append("no completed Python tool execution evidence")
-    if not (workspace / "analysis.py").is_file():
-        errors.append("no agent-generated analysis.py")
+    commands = [p.get("state", {}).get("input", {}).get("command", "") for p in tools if p.get("tool") == "bash"]
+    if any("python3 " in value for value in commands):
+        lines = runtime_file.read_text(encoding="utf-8").splitlines() if runtime_file.is_file() else []
+        if len(lines) < 2 or str(workspace / ".venv") not in lines[1]:
+            errors.append("python3 alias is not confirmed inside the session uv environment")
+    text = "\n".join(e.get("part", {}).get("text", "") for e in events if e.get("type") == "text")
     if manifest["case"] == "sales":
+        if not executions:
+            errors.append("no completed Python tool execution evidence")
+        if not (workspace / "analysis.py").is_file():
+            errors.append("no agent-generated analysis.py")
         try:
             errors.extend(compare_answer(read_json(workspace / "answer.json"), read_json(ROOT / "oracle.json")))
         except (OSError, ValueError):
             errors.append("missing or invalid answer.json")
+        normalized = text.replace(",", "").replace("，", "")
+        if str(read_json(ROOT / "oracle.json")["total_sales"]) not in normalized:
+            errors.append("no textual numeric answer in the conversation")
     else:
+        if manifest["case"] == "missing" and (workspace / "銷售 資料").exists():
+            errors.append("agent created the missing input folder")
+        if not any(p.get("tool") in ("bash", "read", "glob") for p in tools):
+            errors.append("no discovery/read attempt for negative case")
+        if not text.strip():
+            errors.append("no explanatory conversation text for negative case")
         if (workspace / "answer.json").exists():
             errors.append("negative case invented an answer file")
         # Tool output alone is insufficient; the human_checks below also
@@ -379,9 +397,9 @@ def main() -> int:
     prep = commands.add_parser("prepare")
     prep.add_argument("--runs-root", type=Path, default=Path(tempfile.gettempdir()) / "local-excel-poc" / "runs")
     prep.add_argument("--case", choices=("sales", "missing", "corrupt"), default="sales")
-    prep.add_argument("--model", choices=(MODEL, "qwen3.5:9b"), default=MODEL)
+    prep.add_argument("--model", choices=CANDIDATE_MODELS, default=MODEL)
     probe = commands.add_parser("preflight")
-    probe.add_argument("--model", choices=(MODEL, "qwen3.5:9b"), default=MODEL)
+    probe.add_argument("--model", choices=CANDIDATE_MODELS, default=MODEL)
     probe.add_argument("--output", type=Path, required=True)
     runner = commands.add_parser("run")
     runner.add_argument("run_dir", type=Path)

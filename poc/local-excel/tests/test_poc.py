@@ -57,6 +57,8 @@ class FixtureAndSessionTests(unittest.TestCase):
     def test_refuses_agent_workspace_inside_evaluation_assets(self):
         with self.assertRaises(ValueError):
             poc.prepare(poc.ROOT / "runs")
+        with self.assertRaises(ValueError):
+            poc.prepare(poc.REPO_ROOT / "runs")
 
     def test_environment_does_not_inherit_keys_or_overrides(self):
         with tempfile.TemporaryDirectory() as folder:
