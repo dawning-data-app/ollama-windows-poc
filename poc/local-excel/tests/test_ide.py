@@ -10,7 +10,7 @@ import poc
 
 
 class PersistedEvidenceTests(unittest.TestCase):
-    def run_fixture(self, *, complete=True, provider='ollama', change_input=False):
+    def run_fixture(self, *, complete=True, provider='ollama', change_input=False, boundary_receipt=False):
         with tempfile.TemporaryDirectory() as folder:
             run = poc.prepare(Path(folder))
             workspace = run / 'workspace'
@@ -20,6 +20,11 @@ class PersistedEvidenceTests(unittest.TestCase):
             manifest = poc.read_json(run / 'manifest.json')
             manifest.update(interface='official', binary='/test/opencode', context_probe_sha256=poc.sha256(workspace / 'context-probe.txt'))
             poc.write_json(run / 'manifest.json', manifest)
+            if boundary_receipt:
+                (run / 'evidence').mkdir(exist_ok=True)
+                manifest['isolation'] = {'kind': 'test-boundary'}
+                poc.write_json(run / 'manifest.json', manifest)
+                (run / 'evidence/extension-launch.jsonl').write_text(json.dumps({'cwd': '/wrong-session', 'isolation': manifest['isolation']})+'\n')
             if change_input:
                 (workspace / 'uv.lock').write_text('changed')
             log = run / 'state/opencode/log/opencode.log'
@@ -33,7 +38,7 @@ class PersistedEvidenceTests(unittest.TestCase):
                            {'type': 'tool', 'tool': 'bash', 'state': {'status': 'completed',
                             'input': {'command': 'uv run --locked --offline python analysis.py'}, 'metadata': {'exit': 0}}}]}]}
             loaded = {'models': [{'name': poc.MODEL, 'digest': ide.DIGEST, 'context_length': 65536}]}
-            with patch('ide.subprocess.run', return_value=CompletedProcess([], 0, json.dumps(data))), patch('poc.api', return_value=loaded):
+            with patch('ide.subprocess.run', return_value=CompletedProcess([], 0, json.dumps(data))), patch('poc.api', return_value=loaded), patch('ide.isolation.require', return_value={'kind': 'test-boundary'}):
                 return ide.capture(run, 'test')
 
     def test_numeric_output_with_incomplete_conversation_is_rejected(self):
@@ -46,6 +51,10 @@ class PersistedEvidenceTests(unittest.TestCase):
         self.assertIn('unexpected assistant inference route', report['errors'])
         self.assertIn('main/small inference identities not both observed', report['errors'])
 
+    def test_receipt_from_a_different_session_is_rejected(self):
+        report = self.run_fixture(boundary_receipt=True)
+        self.assertIn('execution boundary receipt differs from prepared session', report['errors'])
+
     def test_changed_lockfile_is_rejected(self):
         report = self.run_fixture(change_input=True)
         self.assertIn('protected input changed: uv.lock', report['errors'])
@@ -53,13 +62,13 @@ class PersistedEvidenceTests(unittest.TestCase):
 class ExecutionBoundaryTests(unittest.TestCase):
     def test_both_entrypoints_stop_before_any_process_or_run_access(self):
         # Even a stale, previously prepared run cannot bypass the current stop.
-        with patch('ide.subprocess.Popen') as spawn, patch('ide.poc.read_json') as read:
+        with patch('ide.subprocess.Popen') as spawn, patch('ide.poc.read_json', return_value={}) as read:
             for entrypoint in (ide.launch, ide.start_server):
                 with self.subTest(entrypoint=entrypoint.__name__):
-                    with self.assertRaisesRegex(RuntimeError, 'E003 isolation MVP'):
+                    with self.assertRaisesRegex(RuntimeError, 'E004-qualified isolation'):
                         entrypoint(Path('/nonexistent/stale-run'))
             spawn.assert_not_called()
-            read.assert_not_called()
+            self.assertEqual(read.call_count, 2)
 
 
 if __name__ == '__main__':

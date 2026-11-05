@@ -11,20 +11,13 @@ from pathlib import Path
 import socket
 import subprocess
 import poc
+import isolation
 
 DIGEST = '5eb3a683cbfed5baef1d1f24e2f54afd93e8a9ba344ca71eb8bb37129cf545fe'
 CODE = '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code'
 EXTENSIONS = {'official': 'sst-dev.opencode@1.0.0', 'chamber': 'fedaykindev.openchamber@1.24.2'}
 
-ISOLATION_BLOCK = ('Extension execution paused: E003 isolation MVP is unresolved; '
-                   'do not resume without a validated execution boundary. See experiments/E003/README.md.')
-
 PROBE = 'POC_CONTEXT_ONLY: synthetic Excel environment; no analysis or expected answers.\n'
-
-
-def require_execution_boundary() -> None:
-    # Fail closed while the authorized isolation MVP lacks end-to-end evidence.
-    raise RuntimeError(ISOLATION_BLOCK)
 
 
 def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool = False) -> Path:
@@ -49,6 +42,8 @@ def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool
         raise ValueError('OpenCode upgrade requires a separate decision')
     poc.validate_config(poc.read_json(run / 'evidence/effective-config.stdout'), poc.MODEL)
     (run / 'workspace/context-probe.txt').write_text(PROBE)
+    boundary = isolation.prepare(run, binary)
+    env = isolation.environment(run)
     poc.write_json(run / 'launch-env.json', env)
     (run / 'bin').mkdir()
     launcher = run / 'bin/opencode'
@@ -57,16 +52,20 @@ def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool
 import json, os, pathlib, sys, time
 run = pathlib.Path({str(run)!r})
 workspace = run / 'workspace'
-raise SystemExit({ISOLATION_BLOCK!r})
+policy = run / 'sandbox.sb'
+import hashlib
+if hashlib.sha256(policy.read_bytes()).hexdigest() != {boundary['sha256']!r}:
+    raise SystemExit('Isolation policy changed; refusing launch')
 if pathlib.Path.cwd().resolve() != workspace:
     raise SystemExit('Refusing unexpected extension working directory')
 env = json.loads((run / 'launch-env.json').read_text())
 receipt = {{'cwd': os.getcwd(), 'pid': os.getpid(), 'ppid': os.getppid(),
            'argv': sys.argv[1:], 'python': sys.executable, 'time': time.time(),
-           'config': env['OPENCODE_CONFIG'], 'virtual_env': env['VIRTUAL_ENV']}}
+           'config': env['OPENCODE_CONFIG'], 'virtual_env': env['VIRTUAL_ENV'],
+           'isolation': {boundary!r}}}
 with (run / 'evidence/extension-launch.jsonl').open('a') as f:
     f.write(json.dumps(receipt) + '\\n')
-os.execvpe('uv', ['uv', 'run', '--locked', '--offline', {binary!r}, *sys.argv[1:]], env)
+os.execve('/usr/bin/sandbox-exec', ['/usr/bin/sandbox-exec', '-f', str(policy), 'uv', 'run', '--locked', '--offline', {binary!r}, *sys.argv[1:]], env)
 ''')
     launcher.chmod(0o755)
     settings = {'window.title': f'Excel POC {interface} {case} {run.name}',
@@ -83,7 +82,7 @@ os.execvpe('uv', ['uv', 'run', '--locked', '--offline', {binary!r}, *sys.argv[1:
     poc.write_json(run / 'session.code-workspace', {'folders': [{'path': str(run / 'workspace')}], 'settings': {k: v for k, v in settings.items() if k not in ('update.mode', 'extensions.autoUpdate', 'extensions.autoCheckUpdates', 'telemetry.telemetryLevel')}})
     manifest = poc.read_json(run / 'manifest.json')
     manifest.update(interface=interface, probe=probe, extension=EXTENSIONS[interface], binary=binary,
-                    digest=DIGEST, status='ide-prepared', context_probe=PROBE,
+                    digest=DIGEST, status='ide-prepared', isolation=boundary, blind_test=isolation.BOUNDARY, context_probe=PROBE,
                     context_probe_sha256=poc.sha256(run / 'workspace/context-probe.txt'))
     poc.write_json(run / 'manifest.json', manifest)
     return run
@@ -91,7 +90,7 @@ os.execvpe('uv', ['uv', 'run', '--locked', '--offline', {binary!r}, *sys.argv[1:
 
 def start_server(run: Path) -> None:
     """OpenChamber's supported external-API mode; never upgrade its backend."""
-    require_execution_boundary()
+    isolation.require(run)
     manifest = poc.read_json(run / 'manifest.json')
     if manifest['interface'] != 'chamber' or (run / 'server.json').exists():
         raise ValueError('server already prepared or wrong interface')
@@ -99,12 +98,12 @@ def start_server(run: Path) -> None:
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
     log = (run / 'evidence/server.log').open('w')
-    proc = subprocess.Popen([manifest['binary'], 'serve', '--hostname', '127.0.0.1', '--port', str(port)],
-                            cwd=run / 'workspace', env=poc.environment(run), stdout=log, stderr=log,
+    proc = subprocess.Popen(isolation.command(run, ['uv', 'run', '--locked', '--offline', manifest['binary'], 'serve', '--hostname', '127.0.0.1', '--port', str(port)]),
+                            cwd=run / 'workspace', env=isolation.environment(run), stdout=log, stderr=log,
                             start_new_session=True)
     log.close()
     endpoint = f'http://127.0.0.1:{port}'
-    poc.write_json(run / 'server.json', {'pid': proc.pid, 'url': endpoint, 'cwd': str(run / 'workspace')})
+    poc.write_json(run / 'server.json', {'pid': proc.pid, 'url': endpoint, 'cwd': str(run / 'workspace'), 'isolation': manifest['isolation']})
     settings_path = run / 'vscode-data/User/settings.json'
     settings = poc.read_json(settings_path)
     settings['openchamber.apiUrl'] = endpoint
@@ -114,7 +113,7 @@ def start_server(run: Path) -> None:
 
 
 def launch(run: Path) -> None:
-    require_execution_boundary()
+    isolation.require(run)
     manifest = poc.read_json(run / 'manifest.json')
     if manifest['status'] != 'ide-prepared':
         raise ValueError('launch requires a fresh prepared IDE run')
@@ -153,6 +152,17 @@ def capture(run: Path, session_id: str | None) -> dict:
     loaded = poc.api('/api/ps')
     poc.write_json(run / 'evidence/loaded-after.json', loaded)
     errors = []
+    if manifest.get('isolation'):
+        try:
+            boundary = isolation.require(run)
+            if manifest['interface'] == 'official':
+                receipts = [json.loads(line) for line in (run / 'evidence/extension-launch.jsonl').read_text().splitlines()]
+            else:
+                receipts = [poc.read_json(run / 'server.json')]
+            if not receipts or any(r.get('isolation') != boundary or r.get('cwd') != str(run / 'workspace') for r in receipts):
+                errors.append('execution boundary receipt differs from prepared session')
+        except (OSError, ValueError, RuntimeError, KeyError):
+            errors.append('execution boundary not confirmed')
     workspace = run / 'workspace'
     for name, key in [('uv.lock', 'lock_sha256'), ('opencode.json', 'config_sha256'),
                       ('context-probe.txt', 'context_probe_sha256')]:
