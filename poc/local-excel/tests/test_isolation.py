@@ -58,6 +58,14 @@ print('inside, XLSX, cross-path, symlink and inherited child boundary verified')
         self.assertEqual(outside.read_text(), 'NO_ANSWERS')
         self.assertEqual(poc.sha256(poc.ROOT / 'oracle.json'), oracle_hash)
 
+    def test_zsh_heredoc_uses_the_session_temp_prefix(self):
+        result = subprocess.run(isolation.command(self.run, ['/bin/zsh', '-c',
+                                "cat <<'POC_EOF'\nNO_ANSWERS\nPOC_EOF"]),
+                                cwd=self.run / 'workspace', env=isolation.environment(self.run),
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, 'NO_ANSWERS\n')
+
     def test_tampered_policy_cannot_be_used_for_launch(self):
         (self.run / 'sandbox.sb').write_text('(version 1) (allow default)')
         with self.assertRaisesRegex(RuntimeError, 'E004-qualified isolation'):

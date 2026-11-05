@@ -44,13 +44,13 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 | 介面／案例 | run／session | 狀態 |
 |---|---|---|
 | 官方 missing | `20261105T093158-f28c197f`／`ses_e54f15127ffek3vEs8uzAJG6Qm` | 約 179 秒；完整繁中說明找不到輸入、無 answer.json、無跨 session 探索，hashes／路由／隔離 receipt 相符，GUI 工具與結論已見。回覆將資料夾叫作檔案並多加 /xls/xlsx，記為敘述限制。 |
-| 官方 sales 1 | `20261105T094225-116d9cef` | 執行中，尚未判定。 |
+| 官方初版隔離 sales | `20261105T094225-116d9cef`／`ses_e54e527d3ffebRy7X38AD4soGk` | 未通過：900 秒達限後 UI 中止；錯誤輸出路徑、Python SyntaxError 與 zsh here-doc tmp EPERM，沒有完整分析結果。原始失敗保留。 |
 | 官方 sales 2／3／corrupt | 尚未執行 | 不宣稱通過。 |
 | 側欄 sales 1／2／3／missing／corrupt | 尚未執行 | 不宣稱通過。 |
 
 ## 回歸、圖件與人審
 
-本輪 POC unittest 18/18，新增測試防止部分回覆、錯誤 route 或改寫鎖檔被當成通過。既有根目錄 10 項在基準已通過，本輪已重跑通過。tinyllama CLI／腳本／測試／簡報未改動。
+本輪 POC unittest 19/19，新增測試防止部分回覆、錯誤 route 或改寫鎖檔被當成通過。既有根目錄 10 項在基準已通過，本輪已重跑通過。tinyllama CLI／腳本／測試／簡報未改動。
 
 Archify [隔離後增量架構圖](../diagrams/extensions-isolated.html) 已通過 showcase 9/9、0 errors／0 warnings，來源 revision d2399f0；四種 desktop viewport 無 overflow，四張明暗截圖已實際檢視並記錄 visual review passed，詳見 [receipt](../diagrams/extensions-isolated.receipt.json)。繁中內容的固定 Viewer UI／html lang 回退英文。原基準圖保留。Graphify 無既有可用 graph，採定點讀碼，未建圖。PR Lens 將依最終真實 base/head 在 repo 外更新、validate/render，不上傳圖件；GitHub Draft PR 由使用者另行授權更新。
 
@@ -61,3 +61,5 @@ Archify [隔離後增量架構圖](../diagrams/extensions-isolated.html) 已通�
 官方正常三輪結果為 2/3 符合完整機器契約。第三輪原始失敗保留，不手改生成程式／答案，也不換成功樣本。固定資料的日期皆為每月首日，按日鍵分組會碰巧得到相同金額，必須連鍵名一起核對；對話看似正確不能取代獨立 oracle。Mac 尚不可宣稱完整驗收通過。
 
 E003 部分證據不能取代完整工具鏈；E004 已補齊最小驗證，仍不能以此取代兩介面完整 E2E。原 normal 2/3 不構成隔離後重現；新增結果逐輪記錄。原始 missing 工具包含 `find /private/tmp`、列出既有 runs 及 `ls` 其他案例輸入，已以 verified pid 停止；本機 stopped.json 與原始 session export 保留。
+
+初版隔離 E2E 找到 zsh here-doc 暫存缺口：本機 zshparam 手冊說明 TMPPREFIX 預設 /tmp/zsh，並不隨 TMPDIR 改變。相同 policy 的最小對照，未設前 exit 1／EPERM，設為本次 run/tmp/zsh 後 exit 0。helper 已補該環境變數，未放寬 profile、未改模型／資料／提示。為驗證最終 runtime，另列修正後三輪 fresh 正常；不刪除或用成功覆蓋上述失敗。

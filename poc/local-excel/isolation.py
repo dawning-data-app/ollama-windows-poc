@@ -17,7 +17,8 @@ BOUNDARY = 'mac-seatbelt-e004-v1'
 
 def environment(run: Path) -> dict[str, str]:
     env = poc.environment(run)
-    env.update(TMPDIR=str(run / 'tmp') + '/', TMP=str(run / 'tmp'), TEMP=str(run / 'tmp'))
+    env.update(TMPDIR=str(run / 'tmp') + '/', TMP=str(run / 'tmp'), TEMP=str(run / 'tmp'),
+               TMPPREFIX=str(run / 'tmp/zsh'))
     return env
 
 

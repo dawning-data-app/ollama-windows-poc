@@ -118,6 +118,9 @@ def launch(run: Path) -> None:
     manifest = poc.read_json(run / 'manifest.json')
     if manifest['status'] != 'ide-prepared':
         raise ValueError('launch requires a fresh prepared IDE run')
+    # Rebind runtime-only environment for preprepared, still unused sessions.
+    # The model config, fixture, lock and qualified OS policy remain identical.
+    poc.write_json(run / 'launch-env.json', isolation.environment(run))
     if manifest['interface'] == 'chamber' and not (run / 'server.json').is_file():
         raise ValueError('start the controlled local API first')
     env = poc.environment(run)
