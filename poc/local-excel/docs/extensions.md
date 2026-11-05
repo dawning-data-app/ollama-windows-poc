@@ -2,7 +2,7 @@
 
 沿用 [CLI/TUI 教程](../README.md) 的 OpenCode 1.19.5、Qwen 9b 固定 digest／65536 context、合成 Excel、uv.lock 與獨立 oracle。本頁增加兩種介面；[驗證紀錄](extension-verification.md) 才是各案例的實際結果。安裝或啟動成功不表示 E2E 通過。
 
-**目前停止執行**：missing 案例出現跨 session 探索，[E003 隔離 MVP](../../../experiments/E003/README.md) 在有限修正內未成立。`ide.py launch/server` 與新生成 launcher 會拒絕啟動。下列啟動步驟保留為歷史／待恢復流程，勿重用舊暫存 launcher；隔離成立並獲准接回前不進行 E2E。prepare 與 capture 可供唯讀調查。
+**隔離後重測中**：[E003](../../../experiments/E003/README.md) 在有限修正內無法判定；取得使用者額外授權後，[E004](../../../experiments/E004/README.md) 以同一模型／資料完成 OS 與真實工具鏈探測。新 prepare 會產生 Mac policy 並綁定 hash，官方 launcher 與 API server 都限制整個 backend／子程序；舊的無隔離 run 不允許 launch/server，勿手動重用其 launcher。OpenChamber 的 [E002](../../../experiments/E002/README.md) 側欄 probe 已成立；完整 Excel 結果見驗證紀錄。
 
 ## 固定來源與版本
 
@@ -29,7 +29,7 @@ code --profile 'Excel POC OpenChamber' --install-extension <openchamber-1.24.2.v
 
 每次 launch 都以 `code --profile ... --list-extensions --show-versions` 核對受測版本。不把此類使用者層的更新設定寫到 workspace；不更動一般 profile 的更新政策。
 
-在本次環境，使用者另行授權將 `/private/tmp/local-excel-extensions/runs` 加入 VS Code 信任。其他機器若跳出信任提示，由操作者只信任本次合成測試目錄；不關閉 workspace trust。獨立 user-data 程序曾無法由 GUI 控制定位，本輪採同一 VS Code 程序內的專用 profile；這不等於 OS 程序／檔案系統沙箱。
+在本次環境，使用者另行授權將 `/private/tmp/local-excel-extensions/runs` 加入 VS Code 信任。其他機器若跳出信任提示，由操作者只信任本次合成測試目錄；不關閉 workspace trust。獨立 user-data 程序曾無法由 GUI 控制定位，本輪採同一 VS Code 程序內的專用 profile；VS Code profile 本身不提供 OS 隔離；新 helper 另套 E004 的 Mac sandbox-exec policy。
 
 ## 1. 官方 extension：仍在終端對話
 
@@ -77,8 +77,10 @@ uv run --locked python ide.py capture "$Run" --session-id <實際ID>
 
 capture 保存原始 session JSON、所有 user parts（含檔案與 synthetic context）、推論日誌及 loaded model。自動核對完整回覆、真實成功 Python 工具、數值／排名、protected hashes、主／輔模型身份與 65536 context；仍是 `needs-human-review`，不自動宣稱 E2E 通過。
 
-執行者另外看實際 GUI 的工具與最後繁中回覆，逐份讀生成程式確認真的計算 XLSX，檢查額外上下文是否含未授權資料、主輔推論與有效 endpoint。錯誤案例需讀敘述是否清楚且無編造數字。原始證據留 repo 外，repo 只存可公開摘要。原工具不受 OS 沙箱隔離，僅用合成資料；現在已停止進一步執行，不能靠專用 profile 或 OpenCode permission 宣稱隔離。
+執行者另外看實際 GUI 的工具與最後繁中回覆，逐份讀生成程式確認真的計算 XLSX，檢查額外上下文是否含未授權資料、主輔推論與有效 endpoint。錯誤案例需讀敘述是否清楚且無編造數字。原始證據留 repo 外，repo 只存可公開摘要。新工具邊界套用 E004 的 Mac sandbox-exec，允許本次 workspace/tmp/config/cache/state 與唯讀系統／已鎖定工具，阻止其他 session 與 oracle 內容讀取。只允許 Ollama 11434 的 loopback 出站、受測 IDE 所需本機監聽及系統 resolver。這是有限案例驗證，sandbox-exec 已棄用、system.sb 為 Apple 私有介面；並非通用惡意程式防禦保證，仍只使用合成資料。
 
 CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀錄。Mac 人工驗收後才處理 Windows。
 
 兩種入口與共用本機 backend 的 [Archify 架構圖](../diagrams/extensions.html)／[receipt](../diagrams/extensions.receipt.json) 用於理解流程，不能代替各介面 E2E 證據。
+
+隔離驗證的 runtime 限制：OpenCode 1.19.5 曾嘗試背景 npm dependency install，被網路規則阻擋並記 warning；目前已實測的工具鏈仍可完成。這不代表有雲端模型推論。API server 不設定 password，只綁 loopback，測試後停止該次 PID；不提供遠端存取。
