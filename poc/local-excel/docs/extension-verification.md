@@ -1,6 +1,6 @@
 # Extension 增量驗證（2026-11-05）
 
-這是既有 Mac CLI/TUI [基準紀錄](verification.md) 的增量，不改寫基準。**目前隔離後重測中：E004 與 OpenChamber 最小驗證已成立，尚不能宣稱完整 Mac 驗收。** 停止點是 Draft PR 與 human review；Windows 尚未執行。未完成的案例明確保留，不把安裝或啟動當成 E2E。
+這是既有 Mac CLI/TUI [基準紀錄](verification.md) 的增量，不改寫基準。**目前依使用者要求暫停：E004 與 OpenChamber 最小驗證已成立，Mac 完整驗收尚未通過。續作見 [斷點](checkpoint.md)。** 停止點是 Draft PR 與 human review；Windows 尚未執行。未完成的案例明確保留，不把安裝或啟動當成 E2E。
 
 ## 固定條件
 
@@ -41,12 +41,19 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 
 ## 隔離後 fresh E2E（持續更新）
 
-| 介面／案例 | run／session | 狀態 |
+初版隔離的 missing `20261105T093158-f28c197f` 約 179 秒完成，無答案檔／跨 session 探索；原始結果保留。初版隔離 sales `20261105T094225-116d9cef`／`ses_e54e527d3ffebRy7X38AD4soGk` 在 900 秒達限後由 UI 中止：錯誤輸出路徑、Python SyntaxError 及 zsh here-doc tmp EPERM，沒有完整分析；未用成功樣本替換。修正 TMPPREFIX 後另起下列三輪，模型、資料、提示與 policy 均未改。
+
+| 最終 runtime 案例 | run／session | 實際結果 |
 |---|---|---|
-| 官方 missing | `20261105T093158-f28c197f`／`ses_e54f15127ffek3vEs8uzAJG6Qm` | 約 179 秒；完整繁中說明找不到輸入、無 answer.json、無跨 session 探索，hashes／路由／隔離 receipt 相符，GUI 工具與結論已見。回覆將資料夾叫作檔案並多加 /xls/xlsx，記為敘述限制。 |
-| 官方初版隔離 sales | `20261105T094225-116d9cef`／`ses_e54e527d3ffebRy7X38AD4soGk` | 未通過：900 秒達限後 UI 中止；錯誤輸出路徑、Python SyntaxError 與 zsh here-doc tmp EPERM，沒有完整分析結果。原始失敗保留。 |
-| 官方 sales 2／3／corrupt | 尚未執行 | 不宣稱通過。 |
-| 側欄 sales 1／2／3／missing／corrupt | 尚未執行 | 不宣稱通過。 |
+| 官方 sales 1 | `20261105T095506-a99460bf`／`ses_e54d326d5ffeldMpFpNg7vkfQP` | 227.140 秒；真實 Python 計算，要求的數值／月份鍵／排名及 GUI 完整繁中回答相符。模型補充 NT$ 未由 fixture 定義。 |
+| 官方 sales 2 | `20261105T095702-9f505486`／`ses_e54cc6877ffeUFtmtQcw01sfg6` | 158.240 秒；未通過：使用 product 欄當 region，輸出 A=3600、B=8400，最終回答／排名沿用錯誤。總額與月額正確，仍不能通過。 |
+| 官方 sales 3 | `20261105T100713-f970c369`／`ses_e54c62968ffemAZIppxiuMSYn3` | 491.687 秒；模型自行修正初次 0 結果，JSON 要求的數值／排名正確，GUI 對話亦先列全部正確值；最後摘要誤稱 11 筆交易，實際 12 筆，來源是生成程式 row_count-1 的錯誤。不宣稱完整 E2E 通過。 |
+| 官方 missing | `20261105T100850-ffcddc5f`／`ses_e54bb41f8ffePrLL4weL6ecmUa` | 117.543 秒；GUI 清楚回報無輸入、不編造銷售數字，沒有 answer.json 或缺失輸入資料夾；模型將資料夾誤稱檔案，列敘述限制。使用 discovery 工具，未執行 Python 分析。 |
+| 官方 corrupt | `20261105T095840-09423215`／`ses_e54b73140ffe2l8gh8a92BhGQQ` | 301.572 秒；真實 Python 捕獲 BadZipFile，GUI 回報不可分析、沒有 answer.json、輸入未變；但「正常 Excel 至少數十 KB」敘述錯誤，正常合成 fixture 僅 5338 bytes。process exit 0 是 catch 錯誤，不是成功分析。 |
+| 側欄中止的 sales 探索 | `20261105T094918-9e035cd7`／`ses_e54adebeeffeu3i1aFFChTTWgw` | 使用者下班要求中止；已由真實側欄送出，只有 discovery，未完成 Python 分析／最終回答。屬未完成，不當作模型失敗或通過。 |
+| 側欄最終 sales 1／2／3／missing／corrupt | 待續 | 從新的 fresh sessions 執行；不延續中止對話、不提供舊答案／腳本。 |
+
+上述三輪均為 fresh backend state；raw user parts 只有原始需求文字，TUI 多一個尾端空白（非逐字 bytes 相同，去尾端空白後相同），沒有額外選取／附檔。主／輔本機身份、固定 digest／恰好 65536 context、protected hashes 與隔離 receipt 均相符。要求的 JSON 契約 2/3 符合，但存在錯誤分組與錯誤敘述，Mac 仍未完成完整驗收；不得把機器 checks=[] 當成人工 E2E 通過。
 
 ## 回歸、圖件與人審
 

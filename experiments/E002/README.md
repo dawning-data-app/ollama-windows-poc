@@ -29,13 +29,13 @@
 ## 是否成功
 - 執行日期：2026-11-05。
 - 實驗狀態：成功。
-- 本輪驗證任務完成：是；在 15 分鐘互動額度內完成，使用一次 Reload Window 排除初次載入停留。
+- 本輪驗證任務完成：是；在 15 分鐘互動額度內完成；初次載入期間曾執行一次 Reload Window，之後可用，未證明重載為必需。
 
 ## 結果與證據
 - 固定版 1.24.2 安裝於 Excel POC OpenChamber profile；run `20261105T093414-cc98abb6`，session `ses_e54e9f081ffenJYHMmbs4UXU2L`，採 E004 隔離與 loopback 外部 API。
 - 真正點側邊欄輸入與傳送按鈕；畫面可見 pwd、展開的 uv Python 輸出及最終繁中環境回答。實際 interpreter／cwd 指向本次 workspace；約 105 秒完成，匯出 finish=stop，capture errors=[]。
 - main/small stream 皆本機 ollama/qwen3.5:9b、固定 digest／65536；profile receipt 與 protected hashes 相符。user parts 只有一份 172 字原始探測文字，沒有額外選取或附檔。
-- 初次側欄停在 loading，重新載入一次後可用；語系 bundle 缺 zh-tw 的 log 不阻止實際執行。工具結果為準：最終敘述的 interpreter code block 多了一個空格，且 offline 敘述不能外推完整 air-gap。
+- 初次側欄停在 loading，曾重載一次後完成；後續第一輪 E2E 選 New Session 待載入即出現空白輸入，沒有實際執行重載，故不把重載說成必要條件。語系 bundle 缺 zh-tw 的 log 不阻止實際執行。工具結果為準：最終敘述的 interpreter code block 多了一個空格，且 offline 敘述不能外推完整 air-gap。
 - 來源： https://marketplace.visualstudio.com/items?itemName=sst-dev.opencode ；https://github.com/openchamber/openchamber/tree/v1.24.2/packages/vscode 。
 
 ## 結論與限制
