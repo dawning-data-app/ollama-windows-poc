@@ -2,15 +2,15 @@
 
 | 欄位 | 本 topic 邊界 |
 |---|---|
-| Goal | 給資料夾路徑，本機 Qwen 自主使用 Python 工具分析 Excel，結果可核對且有教程；Mac 完成才 Windows。 |
-| Non-Goal | 不做報表產品、網站、MCP、雲端推論或模型評比。 |
-| In-Scope | 獨立 uv/openpyxl 專案、合成資料、session 準備、本機設定、獨立核對、教程與本機圖件。 |
+| Goal | 透過官方 VS Code extension 的終端 TUI，以及現成 extension 的側邊欄聊天，給資料夾路徑，由本機 Qwen 自主寫／執行 Python 分析 Excel；保留 CLI/TUI 基準，Mac 完成才 Windows。 |
+| Non-Goal | 不做報表產品、網站、MCP、雲端推論或模型評比；不自動升級 OpenCode、不更換模型契約、不自製 extension。 |
+| In-Scope | 沿用 uv/openpyxl／資料／oracle；增加固定版官方 extension 與 OpenChamber 的最小可行性及各三輪正常、missing/corrupt；受控 launcher、專用 VS Code profile、上下文／路由證據、教程與本機圖件。 |
 | Out-Of-Scope | tinyllama 重構、公開 API 變更、Graphify 建圖、工具全域整合、發布與合併。Draft PR 由使用者另行明確授權。 |
 | ReadOnly | 舊 CLI／Windows 腳本／測試／簡報、AGENTS、hooks、runtime、skills、GitHub 設定與 .gitignore。 |
-| Written | 本目錄新資產；run/evidence 在 repo 外系統暫存目錄；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
-| Modify | 既有 tracked 檔只有根 README 增加入口。 |
+| Written | 本目錄新資產、experiments/E001 與 E002；run/evidence 在 repo 外系統暫存目錄；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
+| Modify | 本輪可修改此 POC 的 helper／測試／教程／實作與驗證紀錄／圖件；原 baseline poc.py、資料、oracle、uv.lock 保留；根 README 僅入口。 |
 | Deleted | 無既有 tracked 刪除；只清理本次生成的程式或輸出，不刪資料、oracle 或歷史證據。 |
-| TestCase | TC-01 模型／context／路由；TC-02 固定 Excel 正確性；TC-03 三次 fresh sessions 與 missing/corrupt；TC-04 Mac 通過後 Windows；TC-05 圖件來源與驗證。 |
+| TestCase | TC-01 固定 digest／65536／主輔本機路由；TC-02 官方快捷啟動／檔案引用／cwd／config／uv；TC-03 側邊欄最小可行性後真實送出與顯示工具／回答；TC-04 每介面三次 fresh sales、missing、corrupt 與 protected hashes；TC-05 額外上下文／回歸／圖件；TC-06 Mac 人審後 Windows。 |
 
 分支：`feat/andrew/local-excel-poc`。基點：`7dc9902a9a6b47fa0a1f1d9a79e1ce21fce2e561`。只在獨立 feature worktree 實作；dev worktree 不改動。
 
@@ -23,3 +23,7 @@
 ## 人工審查完成條件
 
 測試者確認每次生成程式有實際讀取銷售 XLSX、計算與本機工具紀錄；核對數字、排名、protected-input hashes、模型身份／context／路由、答案污染限制。三次 CLI 之外要有 VS Code TUI 操作證據；負面案例須明確說明讀取失敗。記錄各項 pass/fail/unverified，不以程式 exit 0 或圖件通過替代。
+
+## 本輪 extension 增量
+
+來源與版本先查證，必要 runtime 問題先登錄 experiments 的事前判準再試。官方 sst-dev.opencode 固定 1.0.0，聊天仍是終端 TUI；OpenChamber 2.6.1 要求 backend 2.x，改評估現成 1.24.2，保留 OpenCode 1.19.5 與既有模型契約。若此版無法相容，停止依賴 E2E，提出證據與影響交使用者決策。使用者另行授權信任本次暫存 runs 根目錄；不關閉 workspace trust。
