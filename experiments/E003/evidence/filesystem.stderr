@@ -1,0 +1,6 @@
+sandbox-exec: host must be * or localhost in network address
+
+Backtrace: 
+/private/tmp/local-excel-extensions/isolation/profile.sb:27:56:
+	(remote ip "127.0.0.1:11434")
+

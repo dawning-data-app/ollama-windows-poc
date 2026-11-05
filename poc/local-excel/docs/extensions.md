@@ -2,6 +2,8 @@
 
 沿用 [CLI/TUI 教程](../README.md) 的 OpenCode 1.19.5、Qwen 9b 固定 digest／65536 context、合成 Excel、uv.lock 與獨立 oracle。本頁增加兩種介面；[驗證紀錄](extension-verification.md) 才是各案例的實際結果。安裝或啟動成功不表示 E2E 通過。
 
+**目前停止執行**：missing 案例出現跨 session 探索，[E003 隔離 MVP](../../../experiments/E003/README.md) 在有限修正內未成立。`ide.py launch/server` 與新生成 launcher 會拒絕啟動。下列啟動步驟保留為歷史／待恢復流程，勿重用舊暫存 launcher；隔離成立並獲准接回前不進行 E2E。prepare 與 capture 可供唯讀調查。
+
 ## 固定來源與版本
 
 | 介面 | 受測套件 | 來源／邊界 |
@@ -75,7 +77,7 @@ uv run --locked python ide.py capture "$Run" --session-id <實際ID>
 
 capture 保存原始 session JSON、所有 user parts（含檔案與 synthetic context）、推論日誌及 loaded model。自動核對完整回覆、真實成功 Python 工具、數值／排名、protected hashes、主／輔模型身份與 65536 context；仍是 `needs-human-review`，不自動宣稱 E2E 通過。
 
-執行者另外看實際 GUI 的工具與最後繁中回覆，逐份讀生成程式確認真的計算 XLSX，檢查額外上下文是否含未授權資料、主輔推論與有效 endpoint。錯誤案例需讀敘述是否清楚且無編造數字。原始證據留 repo 外，repo 只存可公開摘要。Python 工具不受 OS 沙箱隔離，僅用合成資料。
+執行者另外看實際 GUI 的工具與最後繁中回覆，逐份讀生成程式確認真的計算 XLSX，檢查額外上下文是否含未授權資料、主輔推論與有效 endpoint。錯誤案例需讀敘述是否清楚且無編造數字。原始證據留 repo 外，repo 只存可公開摘要。原工具不受 OS 沙箱隔離，僅用合成資料；現在已停止進一步執行，不能靠專用 profile 或 OpenCode permission 宣稱隔離。
 
 CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀錄。Mac 人工驗收後才處理 Windows。
 

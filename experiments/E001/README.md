@@ -36,7 +36,7 @@
 - 來源： https://marketplace.visualstudio.com/items?itemName=sst-dev.opencode ；https://github.com/openchamber/openchamber/tree/v1.24.2/packages/vscode 。
 
 ## 結論與限制
-- 本介面可進入 fresh-session Excel E2E；最小環境驗證不能取代銷售分析正確性。
+- 此為原入口的最小環境驗證，不能取代銷售分析正確性；後續 missing 發現跨 session 探索，現依 E003 結果停止新 E2E，不能沿用此成功標記宣稱檔案隔離。
 - 本實驗不核准 backend 升級、模型契約變更或自製 extension；Windows 未執行。
 
 第一次以獨立 user-data 程序啟動時，GUI 控制只能定位原程序，該次為無法判定且未送需求；改用同一程序的專用 profile 與 workspace env 後完成。使用者明確授權信任本次 runs 根目錄。原本錯放 workspace 的使用者層更新設定已移除，沒有關閉 workspace trust。

@@ -36,5 +36,5 @@
 - 來源： https://marketplace.visualstudio.com/items?itemName=sst-dev.opencode ；https://github.com/openchamber/openchamber/tree/v1.24.2/packages/vscode 。
 
 ## 結論與限制
-- 尚不可推進本介面 E2E；完成最小驗證後依事前判準判讀。
+- 尚不可推進本介面 E2E；E003 執行隔離尚未成立，先停止本最小 GUI 驗證。完成隔離並依原判準操作後才可判讀此介面。
 - 本實驗不核准 backend 升級、模型契約變更或自製 extension；Windows 未執行。
