@@ -84,16 +84,20 @@ def config(model: str) -> dict:
             "npm": "@ai-sdk/openai-compatible", "name": "Local Ollama",
             "options": {"baseURL": BASE_URL + "/v1"},
             "models": {model: {"name": model, "tool_call": True,
+                               "reasoning": True, "interleaved": {"field": "reasoning_content"},
                                "limit": {"context": CONTEXT, "output": 8192}}},
         }},
         "default_agent": "excel",
         "agent": {"excel": {"mode": "primary", "model": model_id,
-                              "temperature": 0, "steps": 20,
+                              "temperature": 0.6, "steps": 20,
+                              "prompt": "You are a local Excel analysis agent. openpyxl is already installed in this workspace uv environment. Use the write tool to create analysis.py, then execute it with bash: uv run --locked --offline python analysis.py. The python command also points to this session uv environment. You must actually run the program and use the workbook data. Use a short complete runnable program, not placeholder functions. Do not stop after listing files. Do not install packages. On read errors report the error without inventing results. Follow the requested answer format and reply in Traditional Chinese.",
                               "description": "Analyze local Excel using Python tools"}},
         "permission": {
             "*": "deny", "read": "allow", "glob": "allow", "grep": "allow",
             "edit": "allow", "external_directory": "deny",
-            "bash": {"*": "deny", "uv run --locked --offline python *": "allow"},
+            "bash": {"*": "deny", "pwd": "allow", "ls": "allow", "ls *": "allow",
+                     "find *": "allow", "head *": "allow", "cd *": "allow", "cat *": "allow", "echo *": "allow", "true": "allow",
+                     "uv run --locked --offline python *": "allow", "python *": "allow"},
         },
     }
 
@@ -105,8 +109,8 @@ def prompt(folder: Path, negative: bool = False) -> str:
             'total_sales（數字）、monthly_sales（YYYY-MM到數字的物件）、regional_sales（區域到數字的物件）、'
             'region_ranking（區域名稱陣列）。數值必須來自實際讀檔與計算。')
     return (f'請分析這個資料夾內的 Excel：{folder}\n{task}\n'
-            '工作表為 Sales，date是日期、region是區域、product是商品、quantity是數量、unit_price是單價。\n'
-            '請自主使用檔案寫入工具建立 analysis.py，再以 bash 工具執行 '
+            '可用 glob 工具以 **/*.xlsx 尋找檔案，或用 ls 唯讀列出資料夾。工作表為 Sales，date是日期、region是區域、product是商品、quantity是數量、unit_price是單價。\n'
+            'openpyxl 已預先安裝在本工作區的 uv 環境，不需再安裝。請自主使用檔案寫入工具建立 analysis.py，再以 bash 工具執行 '
             '`uv run --locked --offline python analysis.py`。使用 openpyxl 讀 .xlsx；'
             '不要用 read 工具直接讀二進位 Excel。不要安裝套件或讀取工作區外的檔案。'
             '不得改寫資料、uv鎖檔或OpenCode設定。不要只給使用者尚未執行的程式碼。')
@@ -150,10 +154,21 @@ def environment(run: Path) -> dict[str, str]:
     for key, folder in (("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "state"),
                         ("XDG_STATE_HOME", "state"), ("XDG_CACHE_HOME", "cache")):
         env[key] = str(run / folder)
+    bin_dir = run / "workspace" / ".venv" / ("Scripts" if os.name == "nt" else "bin")
+    env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
+    env["VIRTUAL_ENV"] = str(run / "workspace" / ".venv")
     env.update({"OPENCODE_CONFIG": str(run / "workspace" / "opencode.json"),
                 "OPENCODE_CONFIG_CONTENT": (run / "workspace" / "opencode.json").read_text(encoding="utf-8"),
                 "OPENCODE_DISABLE_AUTOUPDATE": "true", "OPENCODE_DISABLE_DEFAULT_PLUGINS": "true",
                 "OPENCODE_DISABLE_MODELS_FETCH": "true", "OPENCODE_DISABLE_LSP_DOWNLOAD": "true"})
+    return env
+
+
+def setup_environment() -> dict[str, str]:
+    """Use host Python/package caches only for preparation, never for the agent."""
+    env = os.environ.copy()
+    for key in ("VIRTUAL_ENV", "UV_PROJECT_ENVIRONMENT", "UV_PROJECT", "UV_PYTHON"):
+        env.pop(key, None)
     return env
 
 
@@ -231,14 +246,15 @@ def run_agent(run: Path, opencode: str, timeout: float) -> dict:
         write_json(run / "evidence" / "qualification.json", qualified)
         for name, argv in (("uv-version", ["uv", "--version"]),
                            ("opencode-version", [binary, "--version"]),
-                           ("uv-sync", ["uv", "sync", "--locked"]),
+                           ("uv-sync", ["uv", "sync", "--locked", "--python", "3.12.12"]),
+                           ("python-runtime", ["uv", "run", "--locked", "--offline", "python", "-c", "import sys; print(sys.executable)"]),
                            ("effective-config", [binary, "debug", "config"])):
-            if command(argv, run, name, 180, env).returncode:
+            if command(argv, run, name, 180, setup_environment() if name == "uv-sync" else env).returncode:
                 raise ValueError(f"{name} failed; see evaluator evidence")
         effective = read_json(run / "evidence" / "effective-config.stdout")
         validate_config(effective, manifest["model"])
         start = time.monotonic()
-        result = command([binary, "run", "--format", "json", "--agent", "excel",
+        result = command(["uv", "run", "--locked", "--offline", binary, "run", "--format", "json", "--agent", "excel",
                           "--model", f"ollama/{manifest['model']}",
                           (run / "workspace" / "prompt.txt").read_text(encoding="utf-8")],
                          run, "opencode-run", timeout, env)
@@ -266,16 +282,16 @@ def interactive(run: Path, opencode: str) -> dict:
     env = environment(run)
     qualified = preflight(manifest["model"])
     write_json(run / "evidence" / "qualification.json", qualified)
-    for name, argv in (("uv-sync", ["uv", "sync", "--locked"]),
+    for name, argv in (("uv-sync", ["uv", "sync", "--locked", "--python", "3.12.12"]),
                        ("effective-config", [opencode, "debug", "config"])):
-        if command(argv, run, name, 180, env).returncode:
+        if command(argv, run, name, 180, setup_environment() if name == "uv-sync" else env).returncode:
             raise ValueError(f"{name} failed; inspect evidence")
     validate_config(read_json(run / "evidence" / "effective-config.stdout"), manifest["model"])
     manifest["status"] = "interactive-needs-review"
     manifest["digest"] = qualified["digest"]
     write_json(run / "manifest.json", manifest)
     print((run / "workspace" / "prompt.txt").read_text(encoding="utf-8"), flush=True)
-    result = subprocess.run([opencode, "--agent", "excel", "--model", f"ollama/{manifest['model']}"],
+    result = subprocess.run(["uv", "run", "--locked", "--offline", opencode, "--agent", "excel", "--model", f"ollama/{manifest['model']}"],
                             cwd=run / "workspace", env=env, check=False)
     manifest["returncode"] = result.returncode
     write_json(run / "manifest.json", manifest)
@@ -315,7 +331,12 @@ def check(run: Path) -> dict:
         errors.append("missing or invalid JSON event evidence")
     tools = [event.get("part", {}) for event in events if event.get("type") == "tool_use"]
     executions = [p for p in tools if p.get("tool") == "bash" and p.get("state", {}).get("status") == "completed"
-                  and "uv run --locked --offline python" in p.get("state", {}).get("input", {}).get("command", "")]
+                  and "python" in p.get("state", {}).get("input", {}).get("command", "")
+                  and "analysis.py" in p.get("state", {}).get("input", {}).get("command", "")
+                  and (manifest["case"] != "sales" or p.get("state", {}).get("metadata", {}).get("exit") == 0)]
+    runtime_file = run / "evidence" / "python-runtime.stdout"
+    if not runtime_file.is_file() or str(workspace / ".venv") not in runtime_file.read_text(encoding="utf-8"):
+        errors.append("session uv Python interpreter not confirmed")
     if not executions:
         errors.append("no completed Python tool execution evidence")
     if not (workspace / "analysis.py").is_file():

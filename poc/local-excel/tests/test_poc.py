@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -33,6 +34,19 @@ class FixtureAndSessionTests(unittest.TestCase):
             self.assertNotIn("12000", (first / "workspace" / "prompt.txt").read_text())
             self.assertEqual(poc.sha256(first / "workspace" / "uv.lock"), poc.sha256(poc.ROOT / "uv.lock"))
             poc.validate_config(poc.read_json(first / "workspace" / "opencode.json"), poc.MODEL)
+
+    def test_real_uv_sync_then_isolated_offline_runtime(self):
+        with tempfile.TemporaryDirectory() as folder:
+            run = poc.prepare(Path(folder))
+            ready = poc.command(["uv", "sync", "--locked", "--offline", "--python", "3.12.12"],
+                                run, "uv-sync", 60, poc.setup_environment())
+            self.assertEqual(ready.returncode, 0)
+            result = subprocess.check_output(
+                ["uv", "run", "--locked", "--offline", "python", "-c",
+                 "import sys,openpyxl; print(sys.executable); print(openpyxl.__version__)"],
+                cwd=run / "workspace", env=poc.environment(run), text=True, timeout=30)
+            self.assertIn(str(run / "workspace" / ".venv"), result)
+            self.assertIn("3.1.5", result)
 
     def test_negative_fixtures(self):
         with tempfile.TemporaryDirectory() as folder:

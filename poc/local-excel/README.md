@@ -6,6 +6,12 @@
 
 本機互動流程圖：[workflow.html](diagrams/workflow.html)；[驗證 receipt](diagrams/receipt.json)。圖件是流程說明，不是 E2E 通過證據。
 
+## 受測 profile
+
+使用專用 `excel` primary agent，明確告知 openpyxl 已安裝，但不提供分析程式或標準答案。主／輔模型都是本機同一 Qwen。採 thinking coding profile：temperature 0.6、top_p 0.95、top_k 20、min_p 0、presence_penalty 0、repeat_penalty 1；OpenCode 宣告 reasoning 與 `reasoning_content` replay。[Qwen 官方 coding 建議](https://huggingface.co/Qwen/Qwen3.5-4B#best-practices)。診斷過程使用過的預設／non-thinking profile 分開留證，不算這組配置通過。
+
+執行器用 `uv run --locked --offline` 啟動 OpenCode，並把該 session 的 `.venv` 放在 PATH 首位，因此代理的 `python ...` 短命令也使用該次 uv 環境。`evidence/python-runtime.stdout` 記錄實際 interpreter；不依賴全域 openpyxl。推薦分析命令仍是 `uv run --locked --offline python analysis.py`。
+
 ## 1. 準備工具
 
 Mac 先安裝並啟動 VS Code、Ollama，以及 Node.js、uv。已有者沿用。[Ollama](https://ollama.com/download)、[VS Code](https://code.visualstudio.com/)、[uv 安裝](https://docs.astral.sh/uv/getting-started/installation/)。
@@ -24,13 +30,23 @@ ollama pull qwen3.5:4b-q4_K_M
 
 ## 2. 設定真實 context
 
-OpenCode 模型宣告的 `limit.context` **不會**自動設定 Ollama 的執行 context。[官方整合要求 64k+](https://docs.ollama.com/integrations/opencode)。先在啟動 Ollama 的程序設定 `OLLAMA_CONTEXT_LENGTH=65536`，重啟該服務，或依官方 [Modelfile](https://docs.ollama.com/modelfile) 將本次候選模型的 `num_ctx` 設為 65536。不要改既有 tinyllama 配置。記錄任何模型參數調整前後的 digest，Windows 必須重現同一 digest。
+OpenCode 模型宣告的 `limit.context` **不會**自動設定 Ollama 的執行 context。[官方整合要求 64k+](https://docs.ollama.com/integrations/opencode)。本 POC 使用官方 [Modelfile](https://docs.ollama.com/modelfile) 將本次候選模型的 `num_ctx` 與 coding 參數明確固定。不要改既有 tinyllama 配置。記錄任何模型參數調整前後的 digest，Windows 必須重現同一 digest。
 
 若要保留既有 Ollama 服務，不改全域 context，可只調整**本次新下載的 Qwen tag**。先記錄原始 digest，再設定參數；這會產生新的本機 manifest digest，必須在 Windows 做相同步驟並核對。不要對既有 tinyllama 操作：
 
 ```sh
 ollama list
-printf 'FROM qwen3.5:4b-q4_K_M\nPARAMETER num_ctx 65536\n' > /private/tmp/local-excel-poc/Modelfile
+ollama stop qwen3.5:4b-q4_K_M
+cat > /private/tmp/local-excel-poc/Modelfile <<'MODEL'
+FROM qwen3.5:4b-q4_K_M
+PARAMETER num_ctx 65536
+PARAMETER temperature 0.6
+PARAMETER top_p 0.95
+PARAMETER top_k 20
+PARAMETER min_p 0
+PARAMETER presence_penalty 0
+PARAMETER repeat_penalty 1
+MODEL
 ollama create qwen3.5:4b-q4_K_M -f /private/tmp/local-excel-poc/Modelfile
 ollama list
 ```
@@ -108,7 +124,17 @@ ollama serve
 
 ```powershell
 $ModelFile = Join-Path $env:TEMP 'local-excel-poc\Modelfile'
-"FROM qwen3.5:4b-q4_K_M`nPARAMETER num_ctx 65536" | Set-Content -Encoding ascii $ModelFile
+ollama stop qwen3.5:4b-q4_K_M
+@'
+FROM qwen3.5:4b-q4_K_M
+PARAMETER num_ctx 65536
+PARAMETER temperature 0.6
+PARAMETER top_p 0.95
+PARAMETER top_k 20
+PARAMETER min_p 0
+PARAMETER presence_penalty 0
+PARAMETER repeat_penalty 1
+'@ | Set-Content -Encoding ascii $ModelFile
 ollama create qwen3.5:4b-q4_K_M -f $ModelFile
 ollama list
 ```
