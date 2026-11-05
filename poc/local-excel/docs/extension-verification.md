@@ -50,7 +50,7 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 
 ## 回歸、圖件與人審
 
-本輪 POC unittest 19/19，新增測試防止部分回覆、錯誤 route 或改寫鎖檔被當成通過。既有根目錄 10 項在基準已通過，本輪已重跑通過。tinyllama CLI／腳本／測試／簡報未改動。
+本輪 POC unittest 20/20，新增測試防止部分回覆、錯誤 route 或改寫鎖檔被當成通過。既有根目錄 10 項在基準已通過，本輪已重跑通過。tinyllama CLI／腳本／測試／簡報未改動。
 
 Archify [隔離後增量架構圖](../diagrams/extensions-isolated.html) 已通過 showcase 9/9、0 errors／0 warnings，來源 revision d2399f0；四種 desktop viewport 無 overflow，四張明暗截圖已實際檢視並記錄 visual review passed，詳見 [receipt](../diagrams/extensions-isolated.receipt.json)。繁中內容的固定 Viewer UI／html lang 回退英文。原基準圖保留。Graphify 無既有可用 graph，採定點讀碼，未建圖。PR Lens 將依最終真實 base/head 在 repo 外更新、validate/render，不上傳圖件；GitHub Draft PR 由使用者另行授權更新。
 

@@ -10,7 +10,7 @@ import poc
 
 
 class PersistedEvidenceTests(unittest.TestCase):
-    def run_fixture(self, *, complete=True, provider='ollama', change_input=False, boundary_receipt=False, command='uv run --locked --offline python analysis.py'):
+    def run_fixture(self, *, complete=True, provider='ollama', change_input=False, boundary_receipt=False, command='uv run --locked --offline python analysis.py', context=65536):
         with tempfile.TemporaryDirectory() as folder:
             run = poc.prepare(Path(folder))
             workspace = run / 'workspace'
@@ -37,7 +37,7 @@ class PersistedEvidenceTests(unittest.TestCase):
                  'parts': [{'type': 'text', 'text': '總額 12,000'},
                            {'type': 'tool', 'tool': 'bash', 'state': {'status': 'completed',
                             'input': {'command': command}, 'metadata': {'exit': 0}}}]}]}
-            loaded = {'models': [{'name': poc.MODEL, 'digest': ide.DIGEST, 'context_length': 65536}]}
+            loaded = {'models': [{'name': poc.MODEL, 'digest': ide.DIGEST, 'context_length': context}]}
             with patch('ide.subprocess.run', return_value=CompletedProcess([], 0, json.dumps(data))), patch('poc.api', return_value=loaded), patch('ide.isolation.require', return_value={'kind': 'test-boundary'}):
                 return ide.capture(run, 'test')
 
@@ -58,6 +58,10 @@ class PersistedEvidenceTests(unittest.TestCase):
     def test_receipt_from_a_different_session_is_rejected(self):
         report = self.run_fixture(boundary_receipt=True)
         self.assertIn('execution boundary receipt differs from prepared session', report['errors'])
+
+    def test_different_loaded_context_does_not_pass_the_fixed_contract(self):
+        report = self.run_fixture(context=131072)
+        self.assertIn('loaded model digest/context not confirmed', report['errors'])
 
     def test_changed_lockfile_is_rejected(self):
         report = self.run_fixture(change_input=True)

@@ -220,7 +220,7 @@ def capture(run: Path, session_id: str | None) -> dict:
             errors.append('missing negative discovery or explanation')
         if manifest['case'] == 'missing' and fixture.parent.exists():
             errors.append('agent created missing input folder')
-    if not any(m['name'] == poc.MODEL and m['digest'] == DIGEST and m.get('context_length', 0) >= poc.CONTEXT for m in loaded['models']):
+    if not any(m['name'] == poc.MODEL and m['digest'] == DIGEST and m.get('context_length', 0) == poc.CONTEXT for m in loaded['models']):
         errors.append('loaded model digest/context not confirmed')
     inference_log = run / 'state/opencode/log/opencode.log'
     log_text = inference_log.read_text() if inference_log.exists() else ''
