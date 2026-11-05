@@ -10,7 +10,7 @@ import poc
 
 
 class PersistedEvidenceTests(unittest.TestCase):
-    def run_fixture(self, *, complete=True, provider='ollama', change_input=False, boundary_receipt=False):
+    def run_fixture(self, *, complete=True, provider='ollama', change_input=False, boundary_receipt=False, command='uv run --locked --offline python analysis.py'):
         with tempfile.TemporaryDirectory() as folder:
             run = poc.prepare(Path(folder))
             workspace = run / 'workspace'
@@ -36,7 +36,7 @@ class PersistedEvidenceTests(unittest.TestCase):
                           **({'finish': 'stop'} if complete else {})},
                  'parts': [{'type': 'text', 'text': '總額 12,000'},
                            {'type': 'tool', 'tool': 'bash', 'state': {'status': 'completed',
-                            'input': {'command': 'uv run --locked --offline python analysis.py'}, 'metadata': {'exit': 0}}}]}]}
+                            'input': {'command': command}, 'metadata': {'exit': 0}}}]}]}
             loaded = {'models': [{'name': poc.MODEL, 'digest': ide.DIGEST, 'context_length': 65536}]}
             with patch('ide.subprocess.run', return_value=CompletedProcess([], 0, json.dumps(data))), patch('poc.api', return_value=loaded), patch('ide.isolation.require', return_value={'kind': 'test-boundary'}):
                 return ide.capture(run, 'test')
@@ -50,6 +50,10 @@ class PersistedEvidenceTests(unittest.TestCase):
         report = self.run_fixture(provider='cloud')
         self.assertIn('unexpected assistant inference route', report['errors'])
         self.assertIn('main/small inference identities not both observed', report['errors'])
+
+    def test_cat_with_valid_numbers_does_not_count_as_python_execution(self):
+        report = self.run_fixture(command='cat analysis.py')
+        self.assertIn('no successful generated Python execution', report['errors'])
 
     def test_receipt_from_a_different_session_is_rejected(self):
         report = self.run_fixture(boundary_receipt=True)

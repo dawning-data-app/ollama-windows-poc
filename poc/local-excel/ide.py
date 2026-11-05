@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import socket
+import shlex
 import subprocess
 import poc
 import isolation
@@ -136,6 +137,19 @@ def launch(run: Path) -> None:
     poc.write_json(run / 'manifest.json', manifest)
 
 
+def ran_analysis_python(part: dict) -> bool:
+    state = part.get('state', {})
+    if part.get('tool') != 'bash' or state.get('status') != 'completed' or state.get('metadata', {}).get('exit') != 0:
+        return False
+    try:
+        args = shlex.split(state.get('input', {}).get('command', ''))
+    except ValueError:
+        return False
+    prefix = ['uv', 'run', '--locked', '--offline', 'python']
+    return any((i == 0 or args[i - 1] in ('&&', ';')) and args[i:i + 5] == prefix
+               and Path(args[i + 5]).name == 'analysis.py' for i in range(max(0, len(args) - 5)))
+
+
 def capture(run: Path, session_id: str | None) -> dict:
     manifest = poc.read_json(run / 'manifest.json')
     binary = manifest['binary']
@@ -192,9 +206,7 @@ def capture(run: Path, session_id: str | None) -> dict:
             errors.extend(poc.compare_answer(poc.read_json(workspace / 'answer.json'), poc.read_json(poc.ROOT / 'oracle.json')))
         except (OSError, ValueError):
             errors.append('missing or invalid answer.json')
-        if not (workspace / 'analysis.py').is_file() or not any(
-            p.get('tool') == 'bash' and p.get('state', {}).get('metadata', {}).get('exit') == 0
-            and 'analysis.py' in p.get('state', {}).get('input', {}).get('command', '') for p in tools):
+        if not (workspace / 'analysis.py').is_file() or not any(ran_analysis_python(p) for p in tools):
             errors.append('no successful generated Python execution')
         if '12000' not in final.replace(',', ''):
             errors.append('final numeric conversation missing')
