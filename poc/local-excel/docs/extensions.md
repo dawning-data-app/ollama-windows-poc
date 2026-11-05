@@ -78,3 +78,5 @@ capture 保存原始 session JSON、所有 user parts（含檔案與 synthetic c
 執行者另外看實際 GUI 的工具與最後繁中回覆，逐份讀生成程式確認真的計算 XLSX，檢查額外上下文是否含未授權資料、主輔推論與有效 endpoint。錯誤案例需讀敘述是否清楚且無編造數字。原始證據留 repo 外，repo 只存可公開摘要。Python 工具不受 OS 沙箱隔離，僅用合成資料。
 
 CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀錄。Mac 人工驗收後才處理 Windows。
+
+兩種入口與共用本機 backend 的 [Archify 架構圖](../diagrams/extensions.html)／[receipt](../diagrams/extensions.receipt.json) 用於理解流程，不能代替各介面 E2E 證據。
