@@ -50,5 +50,17 @@ class PersistedEvidenceTests(unittest.TestCase):
         report = self.run_fixture(change_input=True)
         self.assertIn('protected input changed: uv.lock', report['errors'])
 
+class ExecutionBoundaryTests(unittest.TestCase):
+    def test_both_entrypoints_stop_before_any_process_or_run_access(self):
+        # Even a stale, previously prepared run cannot bypass the current stop.
+        with patch('ide.subprocess.Popen') as spawn, patch('ide.poc.read_json') as read:
+            for entrypoint in (ide.launch, ide.start_server):
+                with self.subTest(entrypoint=entrypoint.__name__):
+                    with self.assertRaisesRegex(RuntimeError, 'E003 isolation MVP'):
+                        entrypoint(Path('/nonexistent/stale-run'))
+            spawn.assert_not_called()
+            read.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

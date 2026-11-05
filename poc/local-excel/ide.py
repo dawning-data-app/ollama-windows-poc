@@ -1,4 +1,4 @@
-"""Isolated VS Code hosts and evidence capture for existing extensions (Mac).
+"""Dedicated VS Code hosts and evidence capture for existing extensions (Mac).
 
 No extension implementation and no Excel solution are supplied here. GUI input
 must be performed in the extension; capture only reads its persisted session.
@@ -16,7 +16,15 @@ DIGEST = '5eb3a683cbfed5baef1d1f24e2f54afd93e8a9ba344ca71eb8bb37129cf545fe'
 CODE = '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code'
 EXTENSIONS = {'official': 'sst-dev.opencode@1.0.0', 'chamber': 'fedaykindev.openchamber@1.24.2'}
 
+ISOLATION_BLOCK = ('Extension execution paused: E003 isolation MVP is unresolved; '
+                   'do not resume without a validated execution boundary. See experiments/E003/README.md.')
+
 PROBE = 'POC_CONTEXT_ONLY: synthetic Excel environment; no analysis or expected answers.\n'
+
+
+def require_execution_boundary() -> None:
+    # Fail closed while the authorized isolation MVP lacks end-to-end evidence.
+    raise RuntimeError(ISOLATION_BLOCK)
 
 
 def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool = False) -> Path:
@@ -49,6 +57,7 @@ def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool
 import json, os, pathlib, sys, time
 run = pathlib.Path({str(run)!r})
 workspace = run / 'workspace'
+raise SystemExit({ISOLATION_BLOCK!r})
 if pathlib.Path.cwd().resolve() != workspace:
     raise SystemExit('Refusing unexpected extension working directory')
 env = json.loads((run / 'launch-env.json').read_text())
@@ -82,6 +91,7 @@ os.execvpe('uv', ['uv', 'run', '--locked', '--offline', {binary!r}, *sys.argv[1:
 
 def start_server(run: Path) -> None:
     """OpenChamber's supported external-API mode; never upgrade its backend."""
+    require_execution_boundary()
     manifest = poc.read_json(run / 'manifest.json')
     if manifest['interface'] != 'chamber' or (run / 'server.json').exists():
         raise ValueError('server already prepared or wrong interface')
@@ -104,6 +114,7 @@ def start_server(run: Path) -> None:
 
 
 def launch(run: Path) -> None:
+    require_execution_boundary()
     manifest = poc.read_json(run / 'manifest.json')
     if manifest['status'] != 'ide-prepared':
         raise ValueError('launch requires a fresh prepared IDE run')
