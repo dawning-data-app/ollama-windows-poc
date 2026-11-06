@@ -42,10 +42,10 @@ E004 後續：使用者另行授權 15 分鐘／兩次修正，MVP 已成功，�
 |---|---|
 | TC-01 | 最終 runtime 各案例的主／輔本機 streams、固定 digest／恰好 65536、config／uv／protected hashes 均相符。 |
 | TC-02 | 官方快捷入口與 TUI／cwd／config／uv 已實測；引用實際附加全文，但選取行數未保留，屬已知限制。 |
-| TC-03 | 側欄 MVP 成立；三個正常及 missing 的 GUI 工具／最後繁中回答已見。corrupt 真實送出與 Python 錯誤已見，最後 GUI 回答因 cgWindowNotFound 未驗證，human-check。 |
-| TC-04 | 各三輪正常、missing、corrupt 已執行並保留，兩介面正常 JSON 都是 2/3 符合；分組／額外數字／敘述仍有錯誤，完整 E2E 未通過。負面案例無銷售答案，但保留路徑／敘述／GUI 缺口。 |
+| TC-03 | 側欄 MVP 成立；三個正常及 missing 的 GUI 工具／最後繁中回答已見。corrupt 曾遇 cgWindowNotFound，解鎖後已在同一側欄補看最後繁中錯誤報告及最後 Python 工具，沒有重送需求或重啟 backend；歷史缺口保留。 |
+| TC-04 | 各三輪正常、missing、corrupt 已執行並保留，兩介面正常 JSON 都是 2/3 符合；分組／額外數字／敘述仍有錯誤，完整 E2E 未通過。負面案例無銷售答案，但保留路徑／敘述限制；GUI 補驗已完成。 |
 | TC-05 | 原始 user context／模型／hashes／生成程式留證；11/06 POC 20/20；舊 CLI 10/10 為 11/05 結果。Archify 凍結圖再驗 9/9、保留原視覺檢視；Graphify 無既有可用圖、不建圖。PR Lens 按本輪真實 increment base/head 在 repo 外交付，見 render manifest。 |
 | TC-06 | Mac 交 human review／needs-rework，Windows 未執行；不合併。 |
 | TC-07 | E004 最小驗證及真實 OS 回歸成立；新 run 套同一 policy，無 unsandboxed fallback。不外推成通用惡意程式防禦。 |
 
-本輪人審需要處理分析不穩定與 corrupt 最後 GUI 證據缺口。不得以 errors=[]／exit 0／圖件通過取代驗收；不得為追求成功率刪除失敗、換成功樣本，或直接重用本輪生成程式。若決策需要升級 backend、改模型契約或自製 extension，須先取得使用者決策。
+本輪人審需要處理分析不穩定與路徑／敘述限制；corrupt 最後 GUI 證據已補齊。不得以 errors=[]／exit 0／圖件通過取代驗收；不得為追求成功率刪除失敗、換成功樣本，或直接重用本輪生成程式。若決策需要升級 backend、改模型契約或自製 extension，須先取得使用者決策。

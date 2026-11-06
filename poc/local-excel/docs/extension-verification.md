@@ -1,6 +1,6 @@
 # Extension 增量驗證（2026-11-05–06）
 
-這是既有 Mac CLI/TUI [基準紀錄](verification.md) 的增量，不改寫基準。**2026-11-06 已從 [斷點](checkpoint.md) 完成側欄五個 fresh backend 案例：兩介面各三輪正常的 JSON 契約均為 2/3 符合，仍有數值／敘述錯誤；側欄 corrupt 最後回答的 GUI 檢視未驗證。Mac 完整驗收未通過，交 human review。** 停止點是 Draft PR 與 human review；Windows 尚未執行。未完成的案例明確保留，不把安裝或啟動當成 E2E。
+這是既有 Mac CLI/TUI [基準紀錄](verification.md) 的增量，不改寫基準。**2026-11-06 已從 [斷點](checkpoint.md) 完成側欄五個 fresh backend 案例：兩介面各三輪正常的 JSON 契約均為 2/3 符合，仍有數值／敘述錯誤；側欄 corrupt 最後 GUI 回答已於解鎖後補看，未重送需求。Mac 完整驗收未通過，交 human review。** 停止點是 Draft PR 與 human review；Windows 尚未執行。未完成的案例明確保留，不把安裝或啟動當成 E2E。
 
 ## 固定條件
 
@@ -55,7 +55,7 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 | 側欄 sales 2（11/06） | `20261106T070107-7fd781d1`／`ses_e504fa635ffe3XzU6MmhIjsd8z` | 353.464 秒；自行診斷並修正空月額，重新執行後要求的 JSON／總額／月額／區域／排名與 GUI 相符；最後另稱南區 2 月 4200，獨立核對實際 3500，故不宣稱完整 E2E 通過。 |
 | 側欄 sales 3（11/06） | `20261106T070114-6792c2bb`／`ses_e5047c204ffeC9N9EvWOUq8Ur8` | 212.625 秒；真實 Python／JSON／GUI 所有要求數值及排名相符。敘述將 Sales 誤稱「銷售資料」工作表；成長率寫約 163%，精確值 163.636…%（四捨五入整數為 164%）。其他日期型態分支未驗證，不能泛化。 |
 | 側欄 missing（11/06） | `20261106T070118-37a900b6`／`ses_e50414024ffegKTbB7RI49qtgD` | 306.399 秒；真實 Python 回報找不到 Excel，GUI 繁中說明可見；無銷售數字、answer.json 或新建輸入資料夾，未改用其他 session。腳本／最後回答查工作區根目錄而非指定缺失子目錄，不算精確路徑錯誤驗證。正向輸入分支未驗證，不可重用為分析器。 |
-| 側欄 corrupt（11/06） | `20261106T070123-54ca5f4f`／`ses_e503a4c29ffee9kOiPR6vs4i3z` | 435.855 秒；GUI 真實送出並看到初次 SyntaxError、模型自行修正後的 Python「File is not a zip file」。完整 backend 最後回覆為繁中錯誤報告，沒有答案檔且輸入 hash 未變；但工具後 GUI 連續 cgWindowNotFound，**最後回答未能在側欄驗證**，屬 human-check。回覆把相對路徑加成根路徑，28 bytes 誤稱 28 位元；生成程式未執行分支另有「有效 Excel 至少 1–2 MB」錯誤，不重用為分析器。 |
+| 側欄 corrupt（11/06） | `20261106T070123-54ca5f4f`／`ses_e503a4c29ffee9kOiPR6vs4i3z` | 435.855 秒；GUI 真實送出並看到初次 SyntaxError、模型自行修正後的 Python「File is not a zip file」。完整 backend 最後回覆為繁中錯誤報告，沒有答案檔且輸入 hash 未變；工具後曾連續 cgWindowNotFound；使用者解鎖後，07:50 UTC 在同一側欄補看完整最後繁中錯誤報告、展開最後一次 uv Python ZIP 錯誤工具，並實際目視捲至底部的 screenshot。**GUI 證據缺口已補齊**，未重送需求、未重啟 backend／模型，也沒有替換案例。回覆把相對路徑加成根路徑，28 bytes 誤稱 28 位元；生成程式未執行分支另有「有效 Excel 至少 1–2 MB」錯誤，不重用為分析器。 |
 
 上述官方最終三輪均為 fresh backend state；raw user parts 只有原始需求文字，TUI 多一個尾端空白（非逐字 bytes 相同，去尾端空白後相同），沒有額外選取／附檔。主／輔本機身份、固定 digest／恰好 65536 context、protected hashes 與隔離 receipt 均相符。要求的 JSON 契約 2/3 符合，但存在錯誤分組與錯誤敘述，Mac 仍未完成完整驗收；不得把機器 checks=[] 當成人工 E2E 通過。
 
@@ -69,7 +69,7 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 
 Archify [隔離後增量架構圖](../diagrams/extensions-isolated.html) 已通過 showcase 9/9、0 errors／0 warnings，來源 revision d2399f0；四種 desktop viewport 無 overflow，四張明暗截圖已實際檢視並記錄 visual review passed，詳見 [receipt](../diagrams/extensions-isolated.receipt.json)。繁中內容的固定 Viewer UI／html lang 回退英文。原基準圖保留。Graphify 無既有可用 graph，採定點讀碼，未建圖。2026-11-06 重新 validate 仍為 9/9，凍結 spec／HTML hash 與 receipt 完全相同，沿用 11/05 的四張實際視覺檢視，未改圖。PR Lens 的本機交付範圍是 extension 增量（base `4ac7fd16650630d734c0c1dfcdc8373b1723c690` 到最終 HEAD），不是整支 PR 相對 main 的 diff；真實 head／輸出路徑以 graph 與 render manifest 為準，不上傳圖件。GitHub Draft PR 由使用者另行授權更新。
 
-原始 session/export、user context、模型／程序／工具證據在本機暫存 `local-excel-extensions`，另封存到 `/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106`；包含獨立 resume ledger／results、review-evidence.zip／SHA-256 與本機 PR Lens。11/05 checkpoint archive 原樣保留，repo 只提交可公開摘要。核對器固定 `e2e_passed: false`，還需獨立人工驗收。原 extension helper 並非 OS sandbox；missing 已證明僅分離資料夾無法阻止跨 session 探索。本輪僅使用合成資料，E004 後新 run 套用 OS profile，舊無隔離 run 仍拒絕啟動，沒有無隔離 fallback。UI 最終回覆及程式品質的已知限制會依觀察補記，不以 exit 0 冒充完整成功。
+原始 session/export、user context、模型／程序／工具證據在本機暫存 `local-excel-extensions`，先封存到 `/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106`；GUI 補驗後的新證據與最終 PR Lens 另存 `/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106-gui-followup`，前一版不覆蓋。包含獨立 resume ledger／results、review-evidence.zip／SHA-256 與本機 PR Lens。11/05 checkpoint archive 原樣保留，repo 只提交可公開摘要。核對器固定 `e2e_passed: false`，還需獨立人工驗收。原 extension helper 並非 OS sandbox；missing 已證明僅分離資料夾無法阻止跨 session 探索。本輪僅使用合成資料，E004 後新 run 套用 OS profile，舊無隔離 run 仍拒絕啟動，沒有無隔離 fallback。UI 最終回覆及程式品質的已知限制會依觀察補記，不以 exit 0 冒充完整成功。
 
 已知敘述限制：第二輪模型自行使用 NT$，但合成資料未定義幣別；只核對數值與分組／排名，不把模型補充的幣別當作來源資料。兩輪生成程式對其他日期格式或髒資料的處理亦非本 POC 保證。
 

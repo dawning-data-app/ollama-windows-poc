@@ -87,4 +87,4 @@ CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀
 
 本機 zsh 的 here-doc 使用 TMPPREFIX（預設 /tmp/zsh）。helper 將 TMPDIR/TMP/TEMP 與 TMPPREFIX 一起綁到本次已允許的 tmp；launch 會在尚未使用的 prepared run 更新 runtime 環境，舊已執行案例的證據不修改。
 
-本輪正常三次的要求 JSON，官方 TUI 與 OpenChamber 皆為 2/3 符合，仍有錯誤分組與額外敘述。側欄 corrupt 的實際 Python 工具已看到，但最後回覆遇 GUI 定位失敗，尚待人審補看；詳見驗證紀錄。此環境只支持有限合成資料 POC，不能把目前生成程式直接當作可重用分析器。
+本輪正常三次的要求 JSON，官方 TUI 與 OpenChamber 皆為 2/3 符合，仍有錯誤分組與額外敘述。側欄 corrupt 曾遇 GUI 定位失敗，解鎖後已在同一 session 補看最後繁中錯誤報告及 Python 工具，未重送需求；詳見驗證紀錄。此環境只支持有限合成資料 POC，不能把目前生成程式直接當作可重用分析器。

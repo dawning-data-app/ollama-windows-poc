@@ -46,4 +46,8 @@
 
 已按上列清單另建五個 fresh 側欄案例並完成 backend 執行；三輪正常 JSON 2/3 符合，第 1 輪分組錯誤、第 2 輪額外月額錯誤，第 3 輪要求欄位正確但有敘述限制。missing 無答案但查錯目錄；corrupt 真實 Python 損毀錯誤已見，最後繁中回答僅能從 backend 匯出，GUI cgWindowNotFound 的缺口待人工補驗。所有 run／session ID 與結果見 extension-verification.md，昨天中止案例不計入新三輪。
 
-本輪交付證據與 PR Lens：`/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106`。歷史 checkpoint archive 不覆蓋。既有 Draft PR 保持 human review／needs-rework；不重跑以替換失敗，不進 Windows、不合併。若只補看 corrupt 既有最後回答，應查看上述同一 session，不另送需求，也不把匯出文字冒充已在 GUI 驗證。
+07:50 UTC GUI 補驗：使用者解鎖後，在同一 corrupt 側欄看到最後完整繁中錯誤報告，展開最後 uv Python ZIP 錯誤並目視 screenshot；沒有重送需求、重啟 backend 或替換案例。上述 GUI 未驗證為先前交接狀態，現已補齊；分析不穩定與敘述錯誤仍交 human review，Mac 未通過。
+
+本輪第一次交付證據與 PR Lens：`/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106`。歷史 checkpoint archive 不覆蓋。既有 Draft PR 保持 human review／needs-rework；不重跑以替換失敗，不進 Windows、不合併。若只補看 corrupt 既有最後回答，應查看上述同一 session，不另送需求，也不把匯出文字冒充已在 GUI 驗證。
+
+GUI 補驗後最終證據與 PR Lens：`/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106-gui-followup`。第一版 review-20261106 原樣保留。

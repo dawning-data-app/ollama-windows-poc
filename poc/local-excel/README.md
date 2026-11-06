@@ -10,7 +10,7 @@
 
 ## VS Code extension 增量
 
-官方 extension 的終端 TUI 與 OpenChamber 側邊欄操作見 [extension 教程](docs/extensions.md)、[最小可行性 E001](../../experiments/E001/README.md)／[E002](../../experiments/E002/README.md) 及 [各介面驗證紀錄](docs/extension-verification.md)。固定版本與現有 backend 分開核對；原 CLI/TUI 基準保留。 2026-11-06 的兩介面三輪正常 JSON 皆為 2/3 符合，仍有分析／敘述錯誤，側欄 corrupt 最後 GUI 回答未驗證；Mac 未通過完整驗收，Windows 未開始。
+官方 extension 的終端 TUI 與 OpenChamber 側邊欄操作見 [extension 教程](docs/extensions.md)、[最小可行性 E001](../../experiments/E001/README.md)／[E002](../../experiments/E002/README.md) 及 [各介面驗證紀錄](docs/extension-verification.md)。固定版本與現有 backend 分開核對；原 CLI/TUI 基準保留。 2026-11-06 的兩介面三輪正常 JSON 皆為 2/3 符合，仍有分析／敘述錯誤，側欄 corrupt 最後 GUI 回答已於解鎖後補看，仍有敘述限制；Mac 未通過完整驗收，Windows 未開始。
 
 ## 受測 profile
 
