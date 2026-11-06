@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Excel POC：兩種 VS Code 入口",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1340,
+      800
+    ],
+    "repository": {
+      "url": "https://github.com/dawning-data-app/ollama-windows-poc",
+      "revision": "709dd44080bf22a81f3097c7b33c1689ebb1bcb2"
+    }
+  },
+  "components": [
+    {
+      "id": "official-ui",
+      "type": "frontend",
+      "label": "官方 extension",
+      "sublabel": "1.0.0 · 終端 TUI",
+      "pos": [
+        40,
+        95
+      ],
+      "size": [
+        220,
+        80
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/docs/extensions.md"
+        }
+      ]
+    },
+    {
+      "id": "terminal-env",
+      "type": "backend",
+      "label": "受控 launcher",
+      "sublabel": "cwd／config／uv",
+      "pos": [
+        370,
+        95
+      ],
+      "size": [
+        230,
+        80
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/ide.py"
+        }
+      ]
+    },
+    {
+      "id": "sidebar-ui",
+      "type": "frontend",
+      "label": "OpenChamber 側欄",
+      "sublabel": "1.24.2 · 先驗證相容性",
+      "pos": [
+        40,
+        395
+      ],
+      "size": [
+        220,
+        80
+      ],
+      "sources": [
+        {
+          "path": "experiments/E002/README.md"
+        }
+      ]
+    },
+    {
+      "id": "local-api",
+      "type": "backend",
+      "label": "受控本機 API",
+      "sublabel": "apiUrl · 127.0.0.1",
+      "pos": [
+        370,
+        395
+      ],
+      "size": [
+        230,
+        80
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/ide.py"
+        }
+      ]
+    },
+    {
+      "id": "local-agent",
+      "type": "backend",
+      "label": "OpenCode",
+      "sublabel": "1.19.5 · excel agent",
+      "pos": [
+        720,
+        245
+      ],
+      "size": [
+        230,
+        90
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/poc.py"
+        }
+      ]
+    },
+    {
+      "id": "local-inference",
+      "type": "backend",
+      "label": "Ollama／Qwen 9b",
+      "sublabel": "65536 · 固定 digest",
+      "pos": [
+        1050,
+        245
+      ],
+      "size": [
+        240,
+        90
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/docs/verification.md"
+        }
+      ]
+    },
+    {
+      "id": "python-tool",
+      "type": "backend",
+      "label": "自主 Python 分析",
+      "sublabel": "uv · openpyxl",
+      "pos": [
+        720,
+        575
+      ],
+      "size": [
+        230,
+        80
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/pyproject.toml"
+        }
+      ]
+    },
+    {
+      "id": "clean-inputs",
+      "type": "database",
+      "label": "Fresh workspace",
+      "sublabel": "合成 Excel／uv.lock",
+      "pos": [
+        370,
+        675
+      ],
+      "size": [
+        230,
+        80
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/ide.py"
+        },
+        {
+          "path": "poc/local-excel/sales.xlsx"
+        }
+      ]
+    },
+    {
+      "id": "independent-review",
+      "type": "external",
+      "label": "獨立核對／人審",
+      "sublabel": "oracle 留在測試端",
+      "pos": [
+        1050,
+        575
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "sources": [
+        {
+          "path": "poc/local-excel/ide.py"
+        },
+        {
+          "path": "poc/local-excel/oracle.json"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "official-launch",
+      "from": "official-ui",
+      "to": "terminal-env",
+      "label": "快捷啟動",
+      "variant": "emphasis"
+    },
+    {
+      "id": "terminal-start",
+      "from": "terminal-env",
+      "to": "local-agent",
+      "label": "啟動 TUI"
+    },
+    {
+      "id": "sidebar-api",
+      "from": "sidebar-ui",
+      "to": "local-api",
+      "label": "側欄送出"
+    },
+    {
+      "id": "api-backend",
+      "from": "local-api",
+      "to": "local-agent",
+      "label": "本機 API"
+    },
+    {
+      "id": "main-small-inference",
+      "from": "local-agent",
+      "to": "local-inference",
+      "label": "主／輔模型",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-tool",
+      "from": "local-agent",
+      "to": "python-tool",
+      "label": "寫入並執行",
+      "labelDy": 24
+    },
+    {
+      "id": "read-workbook",
+      "from": "clean-inputs",
+      "to": "python-tool",
+      "label": "實讀 XLSX"
+    },
+    {
+      "id": "verify-evidence",
+      "from": "python-tool",
+      "to": "independent-review",
+      "label": "結果與軌跡"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "入口分開驗收",
+      "items": [
+        "每介面三輪正常＋missing／corrupt",
+        "官方入口仍是 TUI，側欄先做最小驗證"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "契約保持一致",
+      "items": [
+        "同一模型、資料、鎖檔與本機路由",
+        "代理只取得需求與乾淨輸入"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "證據邊界",
+      "items": [
+        "記錄引用內容、工具與最終繁中回答",
+        "Python 非 OS 沙箱；Mac 人審後才 Windows"
+      ]
+    }
+  ]
+}

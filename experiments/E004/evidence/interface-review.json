@@ -1,0 +1,20 @@
+{
+  "status": "needs-human-review",
+  "errors": [],
+  "interface": "official",
+  "case": "sales",
+  "session_id": "ses_e54f713f6ffedek1PpKQVr6K21",
+  "models": [
+    [
+      "ollama",
+      "qwen3.5:9b"
+    ]
+  ],
+  "e2e_passed": false,
+  "manual_checks": [
+    "actual extension GUI submission and tool/final rendering",
+    "source really reads/calculates XLSX; no oracle contamination",
+    "extra file/selection context and actual launch environment",
+    "negative-case narrative and all numeric/group/rank relations"
+  ]
+}
