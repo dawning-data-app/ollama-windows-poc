@@ -1,6 +1,8 @@
 # 下班斷點：2026-11-05
 
-狀態：使用者明確要求暫停。停止 E2E，保留 Draft PR／human review；Mac 尚未完整驗收，Windows 未開始，不合併。
+歷史狀態：2026-11-05 使用者明確要求暫停。下列停止證據保留。
+
+2026-11-06 使用者要求從斷點續作；唯讀確認 feature／dev clean、PR head 為 `4626391` 且仍為 Draft。已重新核對固定 runtime／模型、通過 20 項 POC 測試，並另建五個 fresh 側欄案例。最新結果以 [extension-verification.md](extension-verification.md) 為準；Mac 尚未完整驗收，Windows 未開始，不合併。
 
 ## 工作位置
 
@@ -29,7 +31,7 @@
 - 尚未完成真實 Python 分析或最後回答，應標為 user-interrupted-incomplete。
 - 其餘 prepared runs 未送需求；campaign.json 列明各 UUID。這些可以作線索，但續作建議重新 prepare，以免混淆未使用狀態。
 
-## 下次接續
+## 11/05 原續作清單（歷史）
 
 1. 唯讀確認此 feature branch、worktree、PR 與 checkpoint commit。不得改 dev worktree。
 2. 確認 /tmp 的 pinned OpenCode 1.19.5 是否仍存在；若已清空，按教程固定來源重建並核對版本。已安裝 VS Code profiles、Ollama 模型與 repo 鎖檔仍須核對。
@@ -38,4 +40,10 @@
 5. 更新教程、九欄位契約、驗證紀錄；依最終 diff 更新本機 PR Lens validate/render 與 Draft PR。現有圖優先，不自行建 Graphify 圖。
 6. commit by topic → push → Draft PR → human review。不得把數值／敘述失敗當完成，不自改模型契約、升級 backend 或自製 extension；有此需要須交決策。Mac 驗收後才 Windows。
 
-原始 evidence 與 archive 僅供 evaluator／human review，絕不提供受測代理。使用者下班暫停後，不再啟動新測試。
+原始 evidence 與 archive 僅供 evaluator／human review，絕不提供受測代理。2026-11-05 暫停期間沒有啟動新測試；2026-11-06 明確續作後另建 fresh sessions。
+
+## 2026-11-06 本輪交接
+
+已按上列清單另建五個 fresh 側欄案例並完成 backend 執行；三輪正常 JSON 2/3 符合，第 1 輪分組錯誤、第 2 輪額外月額錯誤，第 3 輪要求欄位正確但有敘述限制。missing 無答案但查錯目錄；corrupt 真實 Python 損毀錯誤已見，最後繁中回答僅能從 backend 匯出，GUI cgWindowNotFound 的缺口待人工補驗。所有 run／session ID 與結果見 extension-verification.md，昨天中止案例不計入新三輪。
+
+本輪交付證據與 PR Lens：`/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106`。歷史 checkpoint archive 不覆蓋。既有 Draft PR 保持 human review／needs-rework；不重跑以替換失敗，不進 Windows、不合併。若只補看 corrupt 既有最後回答，應查看上述同一 session，不另送需求，也不把匯出文字冒充已在 GUI 驗證。

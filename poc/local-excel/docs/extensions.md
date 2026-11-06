@@ -2,7 +2,7 @@
 
 沿用 [CLI/TUI 教程](../README.md) 的 OpenCode 1.19.5、Qwen 9b 固定 digest／65536 context、合成 Excel、uv.lock 與獨立 oracle。本頁增加兩種介面；[驗證紀錄](extension-verification.md) 才是各案例的實際結果。安裝或啟動成功不表示 E2E 通過。
 
-**隔離後重測中**：[E003](../../../experiments/E003/README.md) 在有限修正內無法判定；取得使用者額外授權後，[E004](../../../experiments/E004/README.md) 以同一模型／資料完成 OS 與真實工具鏈探測。新 prepare 會產生 Mac policy 並綁定 hash，官方 launcher 與 API server 都限制整個 backend／子程序；舊的無隔離 run 不允許 launch/server，勿手動重用其 launcher。OpenChamber 的 [E002](../../../experiments/E002/README.md) 側欄 probe 已成立；完整 Excel 結果見驗證紀錄。
+**隔離後驗證已紀錄，Mac 尚未通過完整驗收**：[E003](../../../experiments/E003/README.md) 在有限修正內無法判定；取得使用者額外授權後，[E004](../../../experiments/E004/README.md) 以同一模型／資料完成 OS 與真實工具鏈探測。新 prepare 會產生 Mac policy 並綁定 hash，官方 launcher 與 API server 都限制整個 backend／子程序；舊的無隔離 run 不允許 launch/server，勿手動重用其 launcher。OpenChamber 的 [E002](../../../experiments/E002/README.md) 側欄 probe 已成立；完整 Excel 結果見驗證紀錄。
 
 ## 固定來源與版本
 
@@ -64,7 +64,7 @@ cat "$Run/workspace/prompt.txt"
 uv run --locked python ide.py launch "$Run"
 ```
 
-在 OpenChamber 側邊欄確認本次資料夾、`excel` agent 與本機 9b，從該輸入區送出完整需求。不得用 helper 的 HTTP prompt API 或 CLI run 代替 GUI 送出。實際相容性與工具／最終回答呈現以驗證紀錄為準。每次測完只關閉本次視窗／server，不能終止使用者其他程序。
+在 OpenChamber 側邊欄確認本次資料夾、`excel` agent 與本機 9b，從該輸入區送出完整需求。若初始會話清單顯示「正在載入工作階段…」，本輪點該 workspace 的「新增會話」即可進入空白聊天；不把 reload 視為必要步驟。模型圖示本身不足以證明選用的 agent／模型，還須核對 session metadata 與 runtime streams。不得用 helper 的 HTTP prompt API 或 CLI run 代替 GUI 送出。實際相容性與工具／最終回答呈現以驗證紀錄為準。每次測完只關閉本次視窗／server，不能終止使用者其他程序。
 
 ## 各介面的證據與驗收
 
@@ -86,3 +86,5 @@ CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀
 隔離驗證的 runtime 限制：OpenCode 1.19.5 曾嘗試背景 npm dependency install，被網路規則阻擋並記 warning；目前已實測的工具鏈仍可完成。這不代表有雲端模型推論。API server 不設定 password，只綁 loopback，測試後停止該次 PID；不提供遠端存取。
 
 本機 zsh 的 here-doc 使用 TMPPREFIX（預設 /tmp/zsh）。helper 將 TMPDIR/TMP/TEMP 與 TMPPREFIX 一起綁到本次已允許的 tmp；launch 會在尚未使用的 prepared run 更新 runtime 環境，舊已執行案例的證據不修改。
+
+本輪正常三次的要求 JSON，官方 TUI 與 OpenChamber 皆為 2/3 符合，仍有錯誤分組與額外敘述。側欄 corrupt 的實際 Python 工具已看到，但最後回覆遇 GUI 定位失敗，尚待人審補看；詳見驗證紀錄。此環境只支持有限合成資料 POC，不能把目前生成程式直接當作可重用分析器。

@@ -7,7 +7,7 @@
 | In-Scope | 沿用 uv/openpyxl／資料／oracle；增加固定版官方 extension 與 OpenChamber 的最小可行性及各三輪正常、missing/corrupt；受控 launcher、專用 VS Code profile、使用者授權的 Mac 隔離 MVP、上下文／路由證據、教程與本機圖件。 |
 | Out-Of-Scope | tinyllama 重構、公開 API 變更、Graphify 建圖、工具全域整合、發布與合併。Draft PR 由使用者另行明確授權。 |
 | ReadOnly | 舊 CLI／Windows 腳本／測試／簡報、AGENTS、hooks、runtime、skills、GitHub 設定與 .gitignore。 |
-| Written | 本目錄新資產、experiments/E001、E002、E003 與 E004；run/evidence 在 repo 外系統暫存目錄；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
+| Written | 本目錄新資產、experiments/E001、E002、E003 與 E004；run/evidence 在 repo 外系統暫存目錄及本次持久 artifact；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
 | Modify | 本輪可修改此 POC 的 helper／測試／教程／實作與驗證紀錄／圖件；原 baseline poc.py、資料、oracle、uv.lock 保留；根 README 僅入口。 |
 | Deleted | 無既有 tracked 刪除；只清理本次生成的程式或輸出，不刪資料、oracle 或歷史證據。 |
 | TestCase | TC-01 固定 digest／65536／主輔本機路由；TC-02 官方快捷啟動／檔案引用／cwd／config／uv；TC-03 側邊欄最小可行性後真實送出與顯示工具／回答；TC-04 每介面三次 fresh sales、missing、corrupt 與 protected hashes；TC-05 額外上下文／回歸／圖件；TC-06 Mac 人審後 Windows；TC-07 隔離內讀寫／跨 session／oracle／symlink 拒絕與真實工具鏈；未成立須停止執行。 |
@@ -32,4 +32,20 @@
 
 使用者已授權最小隔離實驗，成立後接入並重測。E003 在兩次修正上限內無法判定；只證實部分拒絕，未完成完整 Python／推論／工具鏈，故沒有取得接入前提。官方 missing 越界、正常第三輪鍵名失敗與全部舊證據保留。launch/server 與新生成 launcher 拒絕啟動；無 bypass 參數。既有 CLI/TUI、模型／資料／鎖檔與 oracle 仍為 ReadOnly，Windows、backend 升級、自製 extension、其他隔離技術另待決策。
 
-E004 後續：使用者另行授權 15 分鐘／兩次修正，MVP 已成功，依原條件接入 Mac 隔離與重測。ReadOnly 契約不變。`isolation.py` 與其 OS 回歸屬 Written；新 run 必須具備匹配的 policy／manifest／receipt，舊無隔離 run 仍拒絕。E003 的暫停狀態為歷史，不覆寫實驗結論。兩種介面仍要各完成三輪正常與 missing/corrupt，Mac 尚未驗收。
+E004 後續：使用者另行授權 15 分鐘／兩次修正，MVP 已成功，依原條件接入 Mac 隔離與重測。ReadOnly 契約不變。`isolation.py` 與其 OS 回歸屬 Written；新 run 必須具備匹配的 policy／manifest／receipt，舊無隔離 run 仍拒絕。E003 的暫停狀態為歷史，不覆寫實驗結論。兩種介面依原判準執行三輪正常與 missing/corrupt，實際結果及未驗證項見下表，Mac 尚未驗收。
+
+## 2026-11-06 契約執行對照
+
+九欄位範圍維持不變；本日只在 feature 更新教程／契約／驗證紀錄，未改 runtime、模型、資料或 oracle。驗證執行結束不表示採用條件成立。
+
+| TestCase | 證據／狀態 |
+|---|---|
+| TC-01 | 最終 runtime 各案例的主／輔本機 streams、固定 digest／恰好 65536、config／uv／protected hashes 均相符。 |
+| TC-02 | 官方快捷入口與 TUI／cwd／config／uv 已實測；引用實際附加全文，但選取行數未保留，屬已知限制。 |
+| TC-03 | 側欄 MVP 成立；三個正常及 missing 的 GUI 工具／最後繁中回答已見。corrupt 真實送出與 Python 錯誤已見，最後 GUI 回答因 cgWindowNotFound 未驗證，human-check。 |
+| TC-04 | 各三輪正常、missing、corrupt 已執行並保留，兩介面正常 JSON 都是 2/3 符合；分組／額外數字／敘述仍有錯誤，完整 E2E 未通過。負面案例無銷售答案，但保留路徑／敘述／GUI 缺口。 |
+| TC-05 | 原始 user context／模型／hashes／生成程式留證；11/06 POC 20/20；舊 CLI 10/10 為 11/05 結果。Archify 凍結圖再驗 9/9、保留原視覺檢視；Graphify 無既有可用圖、不建圖。PR Lens 按本輪真實 increment base/head 在 repo 外交付，見 render manifest。 |
+| TC-06 | Mac 交 human review／needs-rework，Windows 未執行；不合併。 |
+| TC-07 | E004 最小驗證及真實 OS 回歸成立；新 run 套同一 policy，無 unsandboxed fallback。不外推成通用惡意程式防禦。 |
+
+本輪人審需要處理分析不穩定與 corrupt 最後 GUI 證據缺口。不得以 errors=[]／exit 0／圖件通過取代驗收；不得為追求成功率刪除失敗、換成功樣本，或直接重用本輪生成程式。若決策需要升級 backend、改模型契約或自製 extension，須先取得使用者決策。

@@ -1,12 +1,12 @@
-# Extension 增量驗證（2026-11-05）
+# Extension 增量驗證（2026-11-05–06）
 
-這是既有 Mac CLI/TUI [基準紀錄](verification.md) 的增量，不改寫基準。**目前依使用者要求暫停：E004 與 OpenChamber 最小驗證已成立，Mac 完整驗收尚未通過。續作見 [斷點](checkpoint.md)。** 停止點是 Draft PR 與 human review；Windows 尚未執行。未完成的案例明確保留，不把安裝或啟動當成 E2E。
+這是既有 Mac CLI/TUI [基準紀錄](verification.md) 的增量，不改寫基準。**2026-11-06 已從 [斷點](checkpoint.md) 完成側欄五個 fresh backend 案例：兩介面各三輪正常的 JSON 契約均為 2/3 符合，仍有數值／敘述錯誤；側欄 corrupt 最後回答的 GUI 檢視未驗證。Mac 完整驗收未通過，交 human review。** 停止點是 Draft PR 與 human review；Windows 尚未執行。未完成的案例明確保留，不把安裝或啟動當成 E2E。
 
 ## 固定條件
 
 OpenCode 1.19.5、Ollama 0.31.1、Python 3.12.12、VS Code 1.137.0、uv 0.9.2；主／輔模型皆為本機 Qwen 9b。digest `5eb3a683cbfed5baef1d1f24e2f54afd93e8a9ba344ca71eb8bb37129cf545fe`，context 65536。資料、uv.lock、oracle 與基準一致；有效 opencode.json hash 為 `7dac6527308a16d50dc84c9c1edcbc10025aa0e0d35a29cf14036e5981abc688`。不提供 oracle、舊答案或分析程式給代理。
 
-版本與公開來源見 [教程](extensions.md)。官方 extension 固定 1.0.0；OpenChamber 固定 1.24.2，沒有升級 backend。較新的 2.6.1 拒絕 OpenCode 1.x，屬文件／source 已可回答的相容性限制；1.24.2 是否可用仍需實測。
+版本與公開來源見 [教程](extensions.md)。官方 extension 固定 1.0.0；OpenChamber 固定 1.24.2，沒有升級 backend。較新的 2.6.1 拒絕 OpenCode 1.x，屬文件／source 已可回答的相容性限制；1.24.2 已完成側欄最小驗證；完整 Excel 品質另按案例核對。
 
 ## 最小可行性
 
@@ -39,7 +39,7 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 
 最小驗證已成立：run `20261105T093414-cc98abb6`／session `ses_e54e9f081ffenJYHMmbs4UXU2L`。實際點側欄送出、展開 pwd 與 Python tool card，看到最終繁中回答；user parts 僅原始 probe，無選取／附檔。此 probe 不計入正常分析三輪。
 
-## 隔離後 fresh E2E（持續更新）
+## 隔離後 fresh E2E（本輪執行紀錄）
 
 初版隔離的 missing `20261105T093158-f28c197f` 約 179 秒完成，無答案檔／跨 session 探索；原始結果保留。初版隔離 sales `20261105T094225-116d9cef`／`ses_e54e527d3ffebRy7X38AD4soGk` 在 900 秒達限後由 UI 中止：錯誤輸出路徑、Python SyntaxError 及 zsh here-doc tmp EPERM，沒有完整分析；未用成功樣本替換。修正 TMPPREFIX 後另起下列三輪，模型、資料、提示與 policy 均未改。
 
@@ -51,21 +51,29 @@ sales 1 的 user parts 僅完整原始需求，與 prompt.txt 逐字相符，沒
 | 官方 missing | `20261105T100850-ffcddc5f`／`ses_e54bb41f8ffePrLL4weL6ecmUa` | 117.543 秒；GUI 清楚回報無輸入、不編造銷售數字，沒有 answer.json 或缺失輸入資料夾；模型將資料夾誤稱檔案，列敘述限制。使用 discovery 工具，未執行 Python 分析。 |
 | 官方 corrupt | `20261105T095840-09423215`／`ses_e54b73140ffe2l8gh8a92BhGQQ` | 301.572 秒；真實 Python 捕獲 BadZipFile，GUI 回報不可分析、沒有 answer.json、輸入未變；但「正常 Excel 至少數十 KB」敘述錯誤，正常合成 fixture 僅 5338 bytes。process exit 0 是 catch 錯誤，不是成功分析。 |
 | 側欄中止的 sales 探索 | `20261105T094918-9e035cd7`／`ses_e54adebeeffeu3i1aFFChTTWgw` | 使用者下班要求中止；已由真實側欄送出，只有 discovery，未完成 Python 分析／最終回答。屬未完成，不當作模型失敗或通過。 |
-| 側欄最終 sales 1／2／3／missing／corrupt | 待續 | 從新的 fresh sessions 執行；不延續中止對話、不提供舊答案／腳本。 |
+| 側欄 sales 1（11/06） | `20261106T065932-e786f200`／`ses_e5055557cffeUSeWObZcARjrj7` | 176.803 秒；未通過：真正以 openpyxl 讀檔並執行 Python，但 region 取第 3 欄 product，輸出 A=3600、B=8400／B>A；GUI 最終繁中回答沿用錯誤。總額／月額正確。 |
+| 側欄 sales 2（11/06） | `20261106T070107-7fd781d1`／`ses_e504fa635ffe3XzU6MmhIjsd8z` | 353.464 秒；自行診斷並修正空月額，重新執行後要求的 JSON／總額／月額／區域／排名與 GUI 相符；最後另稱南區 2 月 4200，獨立核對實際 3500，故不宣稱完整 E2E 通過。 |
+| 側欄 sales 3（11/06） | `20261106T070114-6792c2bb`／`ses_e5047c204ffeC9N9EvWOUq8Ur8` | 212.625 秒；真實 Python／JSON／GUI 所有要求數值及排名相符。敘述將 Sales 誤稱「銷售資料」工作表；成長率寫約 163%，精確值 163.636…%（四捨五入整數為 164%）。其他日期型態分支未驗證，不能泛化。 |
+| 側欄 missing（11/06） | `20261106T070118-37a900b6`／`ses_e50414024ffegKTbB7RI49qtgD` | 306.399 秒；真實 Python 回報找不到 Excel，GUI 繁中說明可見；無銷售數字、answer.json 或新建輸入資料夾，未改用其他 session。腳本／最後回答查工作區根目錄而非指定缺失子目錄，不算精確路徑錯誤驗證。正向輸入分支未驗證，不可重用為分析器。 |
+| 側欄 corrupt（11/06） | `20261106T070123-54ca5f4f`／`ses_e503a4c29ffee9kOiPR6vs4i3z` | 435.855 秒；GUI 真實送出並看到初次 SyntaxError、模型自行修正後的 Python「File is not a zip file」。完整 backend 最後回覆為繁中錯誤報告，沒有答案檔且輸入 hash 未變；但工具後 GUI 連續 cgWindowNotFound，**最後回答未能在側欄驗證**，屬 human-check。回覆把相對路徑加成根路徑，28 bytes 誤稱 28 位元；生成程式未執行分支另有「有效 Excel 至少 1–2 MB」錯誤，不重用為分析器。 |
 
-上述三輪均為 fresh backend state；raw user parts 只有原始需求文字，TUI 多一個尾端空白（非逐字 bytes 相同，去尾端空白後相同），沒有額外選取／附檔。主／輔本機身份、固定 digest／恰好 65536 context、protected hashes 與隔離 receipt 均相符。要求的 JSON 契約 2/3 符合，但存在錯誤分組與錯誤敘述，Mac 仍未完成完整驗收；不得把機器 checks=[] 當成人工 E2E 通過。
+上述官方最終三輪均為 fresh backend state；raw user parts 只有原始需求文字，TUI 多一個尾端空白（非逐字 bytes 相同，去尾端空白後相同），沒有額外選取／附檔。主／輔本機身份、固定 digest／恰好 65536 context、protected hashes 與隔離 receipt 均相符。要求的 JSON 契約 2/3 符合，但存在錯誤分組與錯誤敘述，Mac 仍未完成完整驗收；不得把機器 checks=[] 當成人工 E2E 通過。
+
+2026-11-06 側欄五輪均獨立 prepare／backend state，從真正 OpenChamber textarea 與傳送按鈕送出，沒有 CLI／HTTP prompt 替代。五輪原始 user parts 都只有原需求文字且逐字相符，沒有額外選取／附檔或 synthetic parts；user metadata 為 excel／ollama Qwen 9b，沒有 system override。主／輔 streams、digest、恰好 65536 context、有效 cwd／config／uv、protected hashes 與隔離 receipt 均符合原契約。正常三輪皆有真正 Python 分析；missing 執行錯誤探索腳本，corrupt 真正嘗試讀取損毀檔並 exit 1，均不能稱為成功銷售分析。corrupt 的 file 工具被既有 bash 規則拒絕，未放寬權限。
+
+正常側欄 JSON 2/3 符合不代表三輪穩定重現或完整 E2E 通過；第 2 輪額外數字錯誤也證明機器 errors=[] 不足以驗收。第 3 輪其他日期型別分支未驗證；模型補上的幣別、季節／促銷解釋無來源依據。昨天使用者中止的探索保持未完成，沒有計入今天三輪，也未把舊腳本／答案提供給新代理。
 
 ## 回歸、圖件與人審
 
-本輪 POC unittest 20/20，新增測試防止部分回覆、錯誤 route 或改寫鎖檔被當成通過。既有根目錄 10 項在基準已通過，本輪已重跑通過。tinyllama CLI／腳本／測試／簡報未改動。
+2026-11-06 續作重新執行 POC unittest 20/20（含真實 OS 邊界），新增測試防止部分回覆、錯誤 route 或改寫鎖檔被當成通過。既有根目錄 10 項在基準已通過，2026-11-05 已重跑通過，今天未重複執行未變動的舊 CLI 測試。tinyllama CLI／腳本／測試／簡報未改動。
 
-Archify [隔離後增量架構圖](../diagrams/extensions-isolated.html) 已通過 showcase 9/9、0 errors／0 warnings，來源 revision d2399f0；四種 desktop viewport 無 overflow，四張明暗截圖已實際檢視並記錄 visual review passed，詳見 [receipt](../diagrams/extensions-isolated.receipt.json)。繁中內容的固定 Viewer UI／html lang 回退英文。原基準圖保留。Graphify 無既有可用 graph，採定點讀碼，未建圖。PR Lens 將依最終真實 base/head 在 repo 外更新、validate/render，不上傳圖件；GitHub Draft PR 由使用者另行授權更新。
+Archify [隔離後增量架構圖](../diagrams/extensions-isolated.html) 已通過 showcase 9/9、0 errors／0 warnings，來源 revision d2399f0；四種 desktop viewport 無 overflow，四張明暗截圖已實際檢視並記錄 visual review passed，詳見 [receipt](../diagrams/extensions-isolated.receipt.json)。繁中內容的固定 Viewer UI／html lang 回退英文。原基準圖保留。Graphify 無既有可用 graph，採定點讀碼，未建圖。2026-11-06 重新 validate 仍為 9/9，凍結 spec／HTML hash 與 receipt 完全相同，沿用 11/05 的四張實際視覺檢視，未改圖。PR Lens 的本機交付範圍是 extension 增量（base `4ac7fd16650630d734c0c1dfcdc8373b1723c690` 到最終 HEAD），不是整支 PR 相對 main 的 diff；真實 head／輸出路徑以 graph 與 render manifest 為準，不上傳圖件。GitHub Draft PR 由使用者另行授權更新。
 
-原始 session/export、user context、模型／程序／工具證據留在本機暫存 `local-excel-extensions`，repo 只提交可公開摘要。核對器固定 `e2e_passed: false`，還需獨立人工驗收。原 extension helper 並非 OS sandbox；missing 已證明僅分離資料夾無法阻止跨 session 探索。本輪僅使用合成資料，E004 後新 run 套用 OS profile，舊無隔離 run 仍拒絕啟動，沒有無隔離 fallback。UI 最終回覆及程式品質的已知限制會依觀察補記，不以 exit 0 冒充完整成功。
+原始 session/export、user context、模型／程序／工具證據在本機暫存 `local-excel-extensions`，另封存到 `/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106`；包含獨立 resume ledger／results、review-evidence.zip／SHA-256 與本機 PR Lens。11/05 checkpoint archive 原樣保留，repo 只提交可公開摘要。核對器固定 `e2e_passed: false`，還需獨立人工驗收。原 extension helper 並非 OS sandbox；missing 已證明僅分離資料夾無法阻止跨 session 探索。本輪僅使用合成資料，E004 後新 run 套用 OS profile，舊無隔離 run 仍拒絕啟動，沒有無隔離 fallback。UI 最終回覆及程式品質的已知限制會依觀察補記，不以 exit 0 冒充完整成功。
 
 已知敘述限制：第二輪模型自行使用 NT$，但合成資料未定義幣別；只核對數值與分組／排名，不把模型補充的幣別當作來源資料。兩輪生成程式對其他日期格式或髒資料的處理亦非本 POC 保證。
 
-官方正常三輪結果為 2/3 符合完整機器契約。第三輪原始失敗保留，不手改生成程式／答案，也不換成功樣本。固定資料的日期皆為每月首日，按日鍵分組會碰巧得到相同金額，必須連鍵名一起核對；對話看似正確不能取代獨立 oracle。Mac 尚不可宣稱完整驗收通過。
+隔離前官方正常三輪結果為 2/3 符合完整機器契約。當時第三輪的鍵名失敗保留，不手改生成程式／答案，也不換成功樣本。固定資料的日期皆為每月首日，按日鍵分組會碰巧得到相同金額，必須連鍵名一起核對；對話看似正確不能取代獨立 oracle。Mac 尚不可宣稱完整驗收通過。
 
 E003 部分證據不能取代完整工具鏈；E004 已補齊最小驗證，仍不能以此取代兩介面完整 E2E。原 normal 2/3 不構成隔離後重現；新增結果逐輪記錄。原始 missing 工具包含 `find /private/tmp`、列出既有 runs 及 `ls` 其他案例輸入，已以 verified pid 停止；本機 stopped.json 與原始 session export 保留。
 
