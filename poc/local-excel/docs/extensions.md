@@ -88,3 +88,7 @@ CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀
 本機 zsh 的 here-doc 使用 TMPPREFIX（預設 /tmp/zsh）。helper 將 TMPDIR/TMP/TEMP 與 TMPPREFIX 一起綁到本次已允許的 tmp；launch 會在尚未使用的 prepared run 更新 runtime 環境，舊已執行案例的證據不修改。
 
 本輪正常三次的要求 JSON，官方 TUI 與 OpenChamber 皆為 2/3 符合，仍有錯誤分組與額外敘述。側欄 corrupt 曾遇 GUI 定位失敗，解鎖後已在同一 session 補看最後繁中錯誤報告及 Python 工具，未重送需求；詳見驗證紀錄。此環境只支持有限合成資料 POC，不能把目前生成程式直接當作可重用分析器。
+
+## 2026-11-10：未成立的修正候選
+
+[修正候選驗證](repair-verification.md)／[E005](../../../experiments/E005/README.md) 已保留兩個 fresh MVP 的失敗。新增的通用探索／回答規則只透過 `prepare --evidence-workflow` opt-in，沒有預寫分析器；目前**不採為預設、不建議當作已通過方案**。未加旗標的原 IDE 準備與 CLI/TUI 基準不變。兩版嘗試上限後沒有啟動正式十例；下一輪需先處理 E005 的待決策投入範圍，不能以重試或單元測試宣稱達標。

@@ -7,7 +7,7 @@
 | In-Scope | 沿用 uv/openpyxl／資料／oracle；增加固定版官方 extension 與 OpenChamber 的最小可行性及各三輪正常、missing/corrupt；受控 launcher、專用 VS Code profile、使用者授權的 Mac 隔離 MVP、上下文／路由證據、教程與本機圖件。 |
 | Out-Of-Scope | tinyllama 重構、公開 API 變更、Graphify 建圖、工具全域整合、發布與合併。Draft PR 由使用者另行明確授權。 |
 | ReadOnly | 舊 CLI／Windows 腳本／測試／簡報、AGENTS、hooks、runtime、skills、GitHub 設定與 .gitignore。 |
-| Written | 本目錄新資產、experiments/E001、E002、E003 與 E004；run/evidence 在 repo 外系統暫存目錄及本次持久 artifact；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
+| Written | 本目錄新資產、experiments/E001、E002、E003、E004 與 E005；run/evidence 在 repo 外系統暫存目錄及本次持久 artifact；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
 | Modify | 本輪可修改此 POC 的 helper／測試／教程／實作與驗證紀錄／圖件；原 baseline poc.py、資料、oracle、uv.lock 保留；根 README 僅入口。 |
 | Deleted | 無既有 tracked 刪除；只清理本次生成的程式或輸出，不刪資料、oracle 或歷史證據。 |
 | TestCase | TC-01 固定 digest／65536／主輔本機路由；TC-02 官方快捷啟動／檔案引用／cwd／config／uv；TC-03 側邊欄最小可行性後真實送出與顯示工具／回答；TC-04 每介面三次 fresh sales、missing、corrupt 與 protected hashes；TC-05 額外上下文／回歸／圖件；TC-06 Mac 人審後 Windows；TC-07 隔離內讀寫／跨 session／oracle／symlink 拒絕與真實工具鏈；未成立須停止執行。 |
@@ -49,3 +49,11 @@ E004 後續：使用者另行授權 15 分鐘／兩次修正，MVP 已成功，�
 | TC-07 | E004 最小驗證及真實 OS 回歸成立；新 run 套同一 policy，無 unsandboxed fallback。不外推成通用惡意程式防禦。 |
 
 本輪人審需要處理分析不穩定與路徑／敘述限制；corrupt 最後 GUI 證據已補齊。不得以 errors=[]／exit 0／圖件通過取代驗收；不得為追求成功率刪除失敗、換成功樣本，或直接重用本輪生成程式。若決策需要升級 backend、改模型契約或自製 extension，須先取得使用者決策。
+
+## 2026-11-10 修正候選契約
+
+九欄位範圍不變；Written 增加 workflow.py、tests/test_workflow.py、E005 與本輪驗證紀錄。新提示／嚴格 evaluator 僅以 `--evidence-workflow` opt-in；MVP 未成立，不取代原 IDE 預設或原 CLI/TUI。
+
+ReadOnly 保留 poc.py、sales.xlsx、oracle.json、uv.lock、isolation.py、固定外部 runtime、舊 tinyllama CLI／腳本／測試／簡報。Modify 僅 IDE opt-in／capture 及新模組、測試、教程／紀錄；Deleted 無既有 tracked 刪除。
+
+TC-01／TC-07：兩 MVP 的本機模型、context、原 config、hashes 與 E004 邊界一致。TC-03：兩個 MVP 的真實側欄工具／中止已核對，但沒有完整分析回答。TC-04：正式兩介面三正常＋missing/corrupt 全未執行，前提未成立。TC-05：31/31 POC 回歸，保留舊失敗、凍結 Archify 與本機 PR Lens。TC-06：Mac 未通過、Windows 未開始，Draft／人審。詳細證據及下個待決策見 [修正候選驗證](repair-verification.md)。

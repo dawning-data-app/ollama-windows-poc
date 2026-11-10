@@ -51,3 +51,9 @@
 本輪第一次交付證據與 PR Lens：`/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106`。歷史 checkpoint archive 不覆蓋。既有 Draft PR 保持 human review／needs-rework；不重跑以替換失敗，不進 Windows、不合併。若只補看 corrupt 既有最後回答，應查看上述同一 session，不另送需求，也不把匯出文字冒充已在 GUI 驗證。
 
 GUI 補驗後最終證據與 PR Lens：`/Users/andrew/.codex/artifacts/local-excel-extensions/review-20261106-gui-followup`。第一版 review-20261106 原樣保留。
+
+## 2026-11-10 修正續作停點
+
+新 E005 兩版 MVP 已到事前嘗試上限，沒有成熟修正可凍結，因此正式十例未執行。原始失敗、新 MVP 與錯誤／時間戳見 repair-verification.md；原 b121801 交付不覆蓋。新流程僅實驗 opt-in，原預設及受保護資產不動。
+
+Mac 目標未達成；下一個待決策為一版更短流程、正常／missing／corrupt 各一個 600 秒 fresh MVP，合計 30 分鐘的 E005 建議。尚未授權追加，沒有第三版／模型升級／權限擴張。完成本輪 commit／push／Draft PR 更新後交 human review，不合併、不進 Windows。持久證據：`/Users/andrew/.codex/artifacts/local-excel-repair-20261110`。
