@@ -13,6 +13,7 @@ import shlex
 import subprocess
 import poc
 import isolation
+import workflow
 
 DIGEST = '5eb3a683cbfed5baef1d1f24e2f54afd93e8a9ba344ca71eb8bb37129cf545fe'
 CODE = '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code'
@@ -21,11 +22,13 @@ EXTENSIONS = {'official': 'sst-dev.opencode@1.0.0', 'chamber': 'fedaykindev.open
 PROBE = 'POC_CONTEXT_ONLY: synthetic Excel environment; no analysis or expected answers.\n'
 
 
-def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool = False) -> Path:
+def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool = False, evidence_workflow: bool = False) -> Path:
     binary = str(Path(binary).resolve())
     if not Path(binary).is_file():
         raise ValueError('pinned OpenCode executable is missing')
     run = poc.prepare(runs_root, case)
+    if evidence_workflow and not probe:
+        (run / "workspace/prompt.txt").write_text(workflow.prompt(run / "workspace/銷售 資料", case != "sales"))
     env = poc.environment(run)
     qualified = poc.preflight(poc.MODEL)
     if qualified['digest'] != DIGEST:
@@ -85,6 +88,8 @@ os.execve('/usr/bin/sandbox-exec', ['/usr/bin/sandbox-exec', '-f', str(policy), 
     manifest.update(interface=interface, probe=probe, extension=EXTENSIONS[interface], binary=binary,
                     digest=DIGEST, status='ide-prepared', isolation=boundary, blind_test=isolation.BOUNDARY, context_probe=PROBE,
                     context_probe_sha256=poc.sha256(run / 'workspace/context-probe.txt'))
+    if evidence_workflow and not probe:
+        manifest.update(protocol=workflow.VERSION, prompt_sha256=poc.sha256(run / 'workspace/prompt.txt'))
     poc.write_json(run / 'manifest.json', manifest)
     return run
 
@@ -116,6 +121,8 @@ def start_server(run: Path) -> None:
 def launch(run: Path) -> None:
     isolation.require(run)
     manifest = poc.read_json(run / 'manifest.json')
+    if manifest.get('prompt_sha256') and poc.sha256(run / 'workspace/prompt.txt') != manifest['prompt_sha256']:
+        raise ValueError('prepared prompt changed; refusing launch')
     if manifest['status'] != 'ide-prepared':
         raise ValueError('launch requires a fresh prepared IDE run')
     # Rebind runtime-only environment for preprepared, still unused sessions.
@@ -220,6 +227,10 @@ def capture(run: Path, session_id: str | None) -> dict:
             errors.append('missing negative discovery or explanation')
         if manifest['case'] == 'missing' and fixture.parent.exists():
             errors.append('agent created missing input folder')
+    if manifest.get('protocol'):
+        if poc.sha256(workspace / 'prompt.txt') != manifest['prompt_sha256']:
+            errors.append('protected input changed: prompt.txt')
+        errors.extend(workflow.review(run, manifest, tools, final))
     if not any(m['name'] == poc.MODEL and m['digest'] == DIGEST and m.get('context_length', 0) == poc.CONTEXT for m in loaded['models']):
         errors.append('loaded model digest/context not confirmed')
     inference_log = run / 'state/opencode/log/opencode.log'
@@ -248,6 +259,7 @@ def main() -> None:
     prep = sub.add_parser('prepare')
     prep.add_argument('--interface', choices=['official', 'chamber'], required=True)
     prep.add_argument('--probe', action='store_true')
+    prep.add_argument('--evidence-workflow', action='store_true', help='Opt-in E005 experimental instructions; not qualified for Mac acceptance')
     prep.add_argument('--case', choices=['sales', 'missing', 'corrupt'], default='sales')
     prep.add_argument('--runs-root', type=Path, required=True)
     prep.add_argument('--opencode', required=True)
@@ -258,7 +270,7 @@ def main() -> None:
             command.add_argument('--session-id')
     args = parser.parse_args()
     if args.action == 'prepare':
-        print(prepare(args.interface, args.case, args.runs_root, args.opencode, args.probe))
+        print(prepare(args.interface, args.case, args.runs_root, args.opencode, args.probe, args.evidence_workflow))
     elif args.action == 'launch':
         launch(args.run.resolve())
     elif args.action == 'server':
