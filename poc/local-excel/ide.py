@@ -14,6 +14,7 @@ import subprocess
 import poc
 import isolation
 import workflow
+import shortflow
 
 DIGEST = '5eb3a683cbfed5baef1d1f24e2f54afd93e8a9ba344ca71eb8bb37129cf545fe'
 CODE = '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code'
@@ -22,13 +23,17 @@ EXTENSIONS = {'official': 'sst-dev.opencode@1.0.0', 'chamber': 'fedaykindev.open
 PROBE = 'POC_CONTEXT_ONLY: synthetic Excel environment; no analysis or expected answers.\n'
 
 
-def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool = False, evidence_workflow: bool = False) -> Path:
+def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool = False, evidence_workflow: bool = False, short_workflow: bool = False) -> Path:
+    if sum((probe, evidence_workflow, short_workflow)) > 1:
+        raise ValueError("probe and experimental protocols are mutually exclusive")
     binary = str(Path(binary).resolve())
     if not Path(binary).is_file():
         raise ValueError('pinned OpenCode executable is missing')
     run = poc.prepare(runs_root, case)
     if evidence_workflow and not probe:
         (run / "workspace/prompt.txt").write_text(workflow.prompt(run / "workspace/銷售 資料", case != "sales"))
+    if short_workflow:
+        (run / "workspace/prompt.txt").write_text(shortflow.prompt(run / "workspace/銷售 資料", case != "sales"))
     env = poc.environment(run)
     qualified = poc.preflight(poc.MODEL)
     if qualified['digest'] != DIGEST:
@@ -90,6 +95,8 @@ os.execve('/usr/bin/sandbox-exec', ['/usr/bin/sandbox-exec', '-f', str(policy), 
                     context_probe_sha256=poc.sha256(run / 'workspace/context-probe.txt'))
     if evidence_workflow and not probe:
         manifest.update(protocol=workflow.VERSION, prompt_sha256=poc.sha256(run / 'workspace/prompt.txt'))
+    if short_workflow:
+        manifest.update(protocol=shortflow.VERSION, prompt_sha256=poc.sha256(run / 'workspace/prompt.txt'))
     poc.write_json(run / 'manifest.json', manifest)
     return run
 
@@ -230,7 +237,8 @@ def capture(run: Path, session_id: str | None) -> dict:
     if manifest.get('protocol'):
         if poc.sha256(workspace / 'prompt.txt') != manifest['prompt_sha256']:
             errors.append('protected input changed: prompt.txt')
-        errors.extend(workflow.review(run, manifest, tools, final))
+        reviewer = shortflow.review if manifest["protocol"] == shortflow.VERSION else workflow.review
+        errors.extend(reviewer(run, manifest, tools, final))
     if not any(m['name'] == poc.MODEL and m['digest'] == DIGEST and m.get('context_length', 0) == poc.CONTEXT for m in loaded['models']):
         errors.append('loaded model digest/context not confirmed')
     inference_log = run / 'state/opencode/log/opencode.log'
@@ -260,6 +268,7 @@ def main() -> None:
     prep.add_argument('--interface', choices=['official', 'chamber'], required=True)
     prep.add_argument('--probe', action='store_true')
     prep.add_argument('--evidence-workflow', action='store_true', help='Opt-in E005 experimental instructions; not qualified for Mac acceptance')
+    prep.add_argument('--short-workflow', action='store_true', help='Opt-in E006 one-candidate short workflow')
     prep.add_argument('--case', choices=['sales', 'missing', 'corrupt'], default='sales')
     prep.add_argument('--runs-root', type=Path, required=True)
     prep.add_argument('--opencode', required=True)
@@ -270,7 +279,7 @@ def main() -> None:
             command.add_argument('--session-id')
     args = parser.parse_args()
     if args.action == 'prepare':
-        print(prepare(args.interface, args.case, args.runs_root, args.opencode, args.probe, args.evidence_workflow))
+        print(prepare(args.interface, args.case, args.runs_root, args.opencode, args.probe, args.evidence_workflow, args.short_workflow))
     elif args.action == 'launch':
         launch(args.run.resolve())
     elif args.action == 'server':
