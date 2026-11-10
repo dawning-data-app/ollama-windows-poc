@@ -1,0 +1,1 @@
+請只做環境探測，不做 Excel 分析、不新增依賴。請用 bash 工具執行 pwd，並實際用 uv run --locked --offline python 執行一段 Python，輸出 sys.executable 與 os.getcwd()；讀取 context-probe.txt，最後以繁體中文說明實際環境。不要探索工作區外的檔案。

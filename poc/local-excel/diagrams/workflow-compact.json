@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "本機 Excel 分析：Mac 驗收到 Windows 重現",
+    "quality_profile": "showcase",
+    "viewBox": [
+      720,
+      365
+    ]
+  },
+  "lanes": [
+    {
+      "id": "session",
+      "label": "Mac：準備與自主分析"
+    },
+    {
+      "id": "evaluation",
+      "label": "本機推論與獨立驗收"
+    }
+  ],
+  "mainPath": [
+    "fresh-session",
+    "coding-agent",
+    "generated-analysis",
+    "independent-review",
+    "windows-rerun"
+  ],
+  "nodes": [
+    {
+      "id": "fresh-session",
+      "lane": "session",
+      "col": 0,
+      "type": "database",
+      "label": "新 session",
+      "sublabel": "Excel／uv／題目"
+    },
+    {
+      "id": "coding-agent",
+      "lane": "session",
+      "col": 2,
+      "type": "frontend",
+      "label": "VS Code / OpenCode",
+      "sublabel": "提供資料夾路徑",
+      "width": 150
+    },
+    {
+      "id": "generated-analysis",
+      "lane": "session",
+      "col": 4,
+      "type": "backend",
+      "label": "Python 分析程式",
+      "sublabel": "代理產生並執行",
+      "width": 150
+    },
+    {
+      "id": "qwen-local",
+      "lane": "evaluation",
+      "col": 2,
+      "type": "backend",
+      "label": "Ollama / Qwen",
+      "sublabel": "本機推論・65,536 context",
+      "width": 150
+    },
+    {
+      "id": "independent-review",
+      "lane": "evaluation",
+      "col": 4,
+      "type": "security",
+      "label": "獨立人審",
+      "sublabel": "數值／工具／路由"
+    },
+    {
+      "id": "windows-rerun",
+      "lane": "evaluation",
+      "col": 5,
+      "type": "external",
+      "label": "Windows",
+      "sublabel": "Mac 通過才重跑"
+    }
+  ],
+  "edges": [
+    {
+      "id": "provide-input",
+      "from": "fresh-session",
+      "to": "coding-agent",
+      "role": "main"
+    },
+    {
+      "id": "generate-and-run",
+      "from": "coding-agent",
+      "to": "generated-analysis",
+      "label": "uv / openpyxl",
+      "role": "main",
+      "labelAt": [
+        400,
+        159
+      ]
+    },
+    {
+      "id": "loopback-inference",
+      "from": "coding-agent",
+      "to": "qwen-local",
+      "label": "本機 API",
+      "role": "branch"
+    },
+    {
+      "id": "inspect-execution",
+      "from": "generated-analysis",
+      "to": "independent-review",
+      "label": "工具紀錄與結果",
+      "role": "main"
+    },
+    {
+      "id": "repeat-on-windows",
+      "from": "independent-review",
+      "to": "windows-rerun",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "驗收需要證據",
+      "items": [
+        "標準答案由測試端另存，不交給代理。",
+        "數值、實際工具紀錄與 VS Code 操作都需核對。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "流程與交付邊界",
+      "items": [
+        "此圖不代表 E2E 已通過；Mac 驗收後才重跑 Windows。",
+        "內容為繁中；固定 Viewer UI 與 HTML 語言為英文。"
+      ]
+    }
+  ]
+}
