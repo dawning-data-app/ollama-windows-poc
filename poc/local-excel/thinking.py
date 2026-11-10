@@ -52,15 +52,23 @@ def review(run: Path, manifest: dict, tools: list[dict], final: str) -> list[str
         errors.append('thinking workflow: no actual nonempty reasoning signal observed')
     if not manifest.get('probe'):
         return errors + shortflow.review(run, manifest, tools, final)
-    match = re.fullmatch(re.escape(PROBE_LEAD) + r'\s*```json\s*(\{[\s\S]*\})\s*```\s*', final.strip())
+    body = final.strip()
+    if body.startswith(PROBE_LEAD):
+        body = body[len(PROBE_LEAD):].strip()
+    else:
+        body = ''
+    match = re.fullmatch(r'```json\s*(\{[\s\S]*\})\s*```', body)
     try:
-        response = json.loads(match.group(1)) if match else None
+        response = json.loads(match.group(1) if match else body)
     except ValueError:
         response = None
-    expected = {'marker': MARKER, 'python': str(run / 'workspace/.venv/bin/python'),
-                'prefix': str(run / 'workspace/.venv')}
-    if response != expected:
+    workspace = run / 'workspace'
+    valid = (isinstance(response, dict) and set(response) == {'marker', 'python', 'prefix'}
+             and response.get('marker') == MARKER and response.get('prefix') == str(workspace / '.venv')
+             and response.get('python') in {str(workspace / '.venv/bin' / name)
+                                           for name in ('python', 'python3', 'python3.12')})
+    if not valid:
         errors.append('thinking probe: final must match actual session Python JSON')
-    if not any(workflow.executed(t, 'runtime_probe.py', 0) and workflow.output(t) == expected for t in tools):
+    if not valid or not any(workflow.executed(t, 'runtime_probe.py', 0) and workflow.output(t) == response for t in tools):
         errors.append('thinking probe: no real successful uv Python probe matching final')
     return errors

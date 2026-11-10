@@ -45,3 +45,9 @@ class ThinkingContractTests(unittest.TestCase):
         self.traces();self.assertTrue(thinking.review(self.run,{'probe':True},[],self.final))
         changed=dict(self.result,prefix='/somewhere-else');final=thinking.PROBE_LEAD+'\n```json\n'+json.dumps(changed)+'\n```'
         self.assertTrue(thinking.review(self.run,{'probe':True},[self.tool],final))
+
+    def test_same_venv_python3_alias_and_plain_json_are_valid_probe_outputs(self):
+        self.traces()
+        value=dict(self.result,python=str(self.run/'workspace/.venv/bin/python3'))
+        tool=deepcopy(self.tool);tool['state']['output']=json.dumps(value)
+        self.assertEqual(thinking.review(self.run,{'probe':True},[tool],thinking.PROBE_LEAD+'\n'+json.dumps(value)),[])
