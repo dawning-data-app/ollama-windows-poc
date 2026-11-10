@@ -63,3 +63,7 @@ Mac 目標未達成；下一個待決策為一版更短流程、正常／missing
 使用者已明確授權追加 30 分鐘，E006 一版短流程已執行至期限。正常四次 Python 錯誤、600 秒內未完成；missing 錯誤字串／擴大搜尋違反契約且無最後回答；corrupt 因 GUI 逾時／reset 未送出。兩個已送出 session，沒有重試；不替換歷史失敗。完整三例驗證仍未完成，原定 Mac 目標未達成，正式十例／Windows 均未執行。詳見 [短式驗證紀錄](short-verification.md) 及 [E006](../../../experiments/E006/README.md)。
 
 本輪受限 server 三個埠均已關閉，沒有停止全域 Ollama。保護資產／模型／65536／路由／隔離保留，另存 `/Users/andrew/.codex/artifacts/local-excel-short-20261110`，不覆蓋 E005。下一個待決策為受控環境基線實驗（降低同時視窗負擔，先量 API／GUI／記憶體）或保留 needs-rework；不得自行加時或變更模型／權限。續作前仍須唯讀核對 feature branch／worktree／Draft PR head，不在 dev 實作。
+
+## E007 後續停點
+
+三個新 fresh MVP 已送出與收證，環境 GUI／API 可觀察，正常數值正確但格式不符、missing 無最後回答、corrupt 真實錯誤正確但流程／格式不符。三個 server 均已停止，原失敗不覆蓋；見 [基線紀錄](baseline-verification.md)。持久證據 `/Users/andrew/.codex/artifacts/local-excel-baseline-20261110`。使用者已明確採用限定指令修訂提案，下一批另計最多40分鐘／一候選三例 fresh MVP；不直接正式十例、不改模型／權限／隔離、不在 dev 實作、不合併。

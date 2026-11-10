@@ -106,3 +106,7 @@ uv run --locked python ide.py prepare --short-workflow --interface chamber \
 missing/corrupt 分別用新 prepare，不續接 session，不複製舊生成程式。短流程不要求 inspection.json，仍須自主寫 check_excel.py 探索欄名／型別，成功後自主寫 analysis.py，實際執行並只引用輸出。失敗需原始例外與精確指定路徑；不得改查父目錄或其他 session。
 
 本輪遇系統可用記憶體約 6%、本機 API／GUI 逾時，須列環境干擾；請勿為改善效能減少 65536 context、換模型或取消隔離。正常 Python 錯誤、missing 搜尋錯路徑仍屬具體失敗證據。安裝、啟動、36 項測試或沒有 answer.json 都不能替代 GUI 最後正確回答的驗收。
+
+## 單一測試視窗的可觀察基線
+
+[E007](baseline-verification.md) 保留六個舊 POC 視窗關閉後的一次一 server／視窗結果。先確認 server 真正 listen、三組 health/session GET 成功及側欄草稿，再送需求；啟動時 connection refused 與後續成功要分開保留。不要關閉其他使用者程式、重啟全域 Ollama，或以 free 百分比／API 快判定推論與分析通過。每例結束先收證、停止並核對自己的 backend，再關閉該測試視窗；不要預暖下一案例。

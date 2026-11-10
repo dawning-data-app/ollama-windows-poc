@@ -190,3 +190,5 @@ python3 -m unittest discover -s tests -v
 Extension 增量的 Mac 執行邊界：[隔離架構圖](diagrams/extensions-isolated.html)／[receipt](diagrams/extensions-isolated.receipt.json)。新 fresh session 必須使用已驗證的 policy；此圖不代表完整 E2E 通過。
 
 上述 OS 邊界涵蓋 ide.py 的 extension sessions；原 CLI/TUI 基準保留其已記錄的非 OS 隔離限制，請勿混稱為受限驗證。
+
+E007 [單視窗基線與三例結果](docs/baseline-verification.md)：GUI／API 可觀察，但正常格式、missing、corrupt 流程仍不通過。使用者已同意限定指令修訂與另一輪三例 MVP；不直接進正式重驗。

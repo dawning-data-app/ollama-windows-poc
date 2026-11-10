@@ -63,3 +63,7 @@ TC-01／TC-07：兩 MVP 的本機模型、context、原 config、hashes 與 E004
 Goal／Non-Goal／In-Scope／Out-Of-Scope／ReadOnly／Written／Modify／Deleted／TestCase 九欄位保留。Written 增加 shortflow.py、tests/test_shortflow.py、E006／短式批次紀錄；Modify 僅 ide.py 的互斥 opt-in 與 capture dispatch、教程／紀錄。ReadOnly 基準及固定模型／隔離不變；Deleted 無 tracked 刪除。
 
 使用者明確追加 30 分鐘，不是正式十例重驗授權：一版 `--short-workflow`、三種 fresh MVP，期限後停止。TC-01／07：兩個已送出案例 route/model/context 與三個 workspace hashes/policy 一致；missing 嘗試擴大搜尋但未取得其他資料，不代表遵守指定路徑。TC-03：兩例 GUI 送出／工具可見，無完整最後回答；corrupt 未送出。TC-04：正式十例未執行。TC-05：36/36 POC 測試、保留失敗與既有 Archify、Graphify 不建圖、本機 PR Lens。TC-06：Mac 未通過、Windows 未開始、Draft 交人審。詳見 [E006 驗證](short-verification.md)。
+
+## E007／限定指令修訂決策
+
+Goal、Non-Goal、In-Scope、Out-Of-Scope、ReadOnly、Written、Modify、Deleted、TestCase 九欄位保留。Written 增加 E007／基線與提案紀錄；Modify 本批只有教程／契約／驗證／續作文件，Deleted 無。TC-01／07 三例 hashes／模型／本機路由／原隔離相符；TC-03 三例實際側欄送出／工具可見，正常與 corrupt 最後回答已見，missing 無最後回答；TC-04 未通過、不進正式十例；TC-05 文件變更不重跑既有36測試；TC-06 Mac 未驗收、不進 Windows。使用者另同意新 opt-in agent.excel.prompt 修改與輸出型別／位置澄清，將另記新 config hash；model/digest/context/sampler／權限／隔離不變，本 E007 未套用。見 [基線紀錄](baseline-verification.md)。
