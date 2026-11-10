@@ -194,3 +194,5 @@ Extension 增量的 Mac 執行邊界：[隔離架構圖](diagrams/extensions-iso
 E007 [單視窗基線與三例結果](docs/baseline-verification.md)：GUI／API 可觀察，但正常格式、missing、corrupt 流程仍不通過。使用者已同意限定指令修訂與另一輪三例 MVP；不直接進正式重驗。
 
 [E008 限定指令修訂](docs/aligned-verification.md) 已以新 config hash實作，40/40 POC測試通過；正常只完成探索後自行停止，missing／corrupt因GUI不可得未送出。完整MVP與Mac驗收未完成，原預設保留。
+
+E008 [負面補驗](../../experiments/E008/followup-20261110.md) 已完成首次送出與收證，missing／corrupt仍有路徑／停止／格式錯誤；原正常失敗保留，未進正式重驗。使用者已另同意thinking工具鏈MVP，需先證明相容才做新三例。

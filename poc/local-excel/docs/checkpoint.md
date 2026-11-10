@@ -71,3 +71,7 @@ Mac 目標未達成；下一個待決策為一版更短流程、正常／missing
 ## E008 GUI不可得斷點
 
 候選 source commit d01d474，protocol excel-aligned-v1，新 config hash 34b0dce9…，僅已批准的 agent.excel.prompt改變；40/40 POC通過。正常91.871秒後只給後續計畫，無analysis／answer；missing已準備但session=0，04:25:37 UTC因cgWindowNotFound清理本次server／guard，corrupt未準備。詳見 [E008](aligned-verification.md)。原截止04:49:15 UTC保留，未用盡40分鐘，不重置；使用者解鎖／顯示視窗仍待回覆。續作先唯讀核對feature／branch／Draft PR，未超時可重新prepare零受測session的missing再首次送出，保留舊setup；不重跑失敗正常／補追問。超時則新投入另決策。持久證據 `/Users/andrew/.codex/artifacts/local-excel-aligned-20261110`。正式十例／Windows未開始，不合併。
+
+## E008 負面補驗完成／下一決策已授權
+
+使用者05:30 UTC再次續作，另列05:31–06:01的30分鐘補兩個未送出案例；本次不是舊期限重置。missing／corrupt首次受測與GUI收證已完成，仍有路徑／停止／格式錯誤，詳見 [補驗](../../../experiments/E008/followup-20261110.md)。兩個backend已停止，候選與ReadOnly資產不變，原正常失敗／GUI setup／archive保留。使用者已明確批准新thinking候選：reasoningEffort none→medium相容值，先最多10分鐘工具鏈、成立後40分鐘三例，總50；其他模型／context／sampler／output／路由／指令／權限／隔離不改。下一批E009另列，不進正式十例，不在dev實作，不合併。
