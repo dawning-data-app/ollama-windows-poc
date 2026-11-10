@@ -77,3 +77,9 @@ TC-01正常身份／65536／主輔本機stream／hashes相符，missing僅setup�
 ## E008 後續契約對照
 
 九欄位保留；Written增加E008補驗／thinking提案與紀錄，Modify本批僅文件，ReadOnly不變，Deleted無。TC-01／07補驗兩例hashes／同一34b0dce9…／模型／65536／本機路由／邊界相符；TC-03兩例真正側欄送出、工具與最後回答已見；TC-04三例候選仍失敗，不進正式十例；TC-05沿用既有40項、維護本機圖件；TC-06 Mac未通過、Windows未開始。使用者另批准E009的唯一推理模式變因與50分鐘上限，未套入或重判E008，見 [補驗](../../../experiments/E008/followup-20261110.md)。
+
+## E009 thinking 契約對照
+
+Goal、Non-Goal、In-Scope、Out-Of-Scope、ReadOnly、Written、Modify、Deleted、TestCase 九欄位保留。使用者例外僅新增thinking opt-in的reasoningEffort none→medium，無具名level保證。Written增加thinking.py、test_thinking.py、E009與驗證紀錄；Modify限ide.py互斥prepare／capture、教程／紀錄；ReadOnly保留poc.py、isolation.py、aligned.py、shortflow.py、workflow.py、fixture／oracle／uv.lock與tinyllama資產，Deleted無。
+
+TC-01／07：所有首次樣本核對固定主輔本機route／digest／65536與hash／原policy，config新802cb27b…並保留original／aligned hash，不冒稱config沒改。TC-02：官方TUI本候選未驗。TC-03：probe與三例真實側欄送出，GUI工具／最後或中止狀態按實際列E009，未完成者不補成pass。TC-04：正常未完成，負面依raw判失敗／缺口，正式十例未執行。TC-05：46/46 helper回歸、原Archify再驗9/9與原視覺檢查、Graphify不建圖、本機bounded diff PR Lens；均不等於E2E。TC-06：Mac未驗收、Windows未開始，Draft交human review／needs-rework，不合併。見 [thinking紀錄](thinking-verification.md)。

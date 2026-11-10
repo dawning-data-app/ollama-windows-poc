@@ -75,3 +75,7 @@ Mac 目標未達成；下一個待決策為一版更短流程、正常／missing
 ## E008 負面補驗完成／下一決策已授權
 
 使用者05:30 UTC再次續作，另列05:31–06:01的30分鐘補兩個未送出案例；本次不是舊期限重置。missing／corrupt首次受測與GUI收證已完成，仍有路徑／停止／格式錯誤，詳見 [補驗](../../../experiments/E008/followup-20261110.md)。兩個backend已停止，候選與ReadOnly資產不變，原正常失敗／GUI setup／archive保留。使用者已明確批准新thinking候選：reasoningEffort none→medium相容值，先最多10分鐘工具鏈、成立後40分鐘三例，總50；其他模型／context／sampler／output／路由／指令／權限／隔離不改。下一批E009另列，不進正式十例，不在dev實作，不合併。
+
+## E009 thinking 實驗停點
+
+在既有feature／branch完成已批准的唯一reasoningEffort變因實驗，source754f9fb／probe-review修正63ba9db。probe真實執行在10分鐘內完成；人工核對晚39秒已揭露，未重送，總截止06:49不補時。正常／missing／corrupt各一個fresh側欄樣本保留，候選未成立，不正式重驗。所有本次backend已停止，全域Ollama保留；詳見 [E009](thinking-verification.md)。持久證據 `local-excel-thinking-20261110`；原archive不覆蓋。原預設／CLI/TUI／模型digest／context／sampler／output／隔離與九欄位契約保持，不在dev實作。續作先唯讀核對feature／branch／Draft PR與交付head，下一步為human review／needs-rework決策，不自動加時／改模型或runtime契約、不合併、不進Windows。

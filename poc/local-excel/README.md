@@ -196,3 +196,7 @@ E007 [單視窗基線與三例結果](docs/baseline-verification.md)：GUI／API
 [E008 限定指令修訂](docs/aligned-verification.md) 已以新 config hash實作，40/40 POC測試通過；正常只完成探索後自行停止，missing／corrupt因GUI不可得未送出。完整MVP與Mac驗收未完成，原預設保留。
 
 E008 [負面補驗](../../experiments/E008/followup-20261110.md) 已完成首次送出與收證，missing／corrupt仍有路徑／停止／格式錯誤；原正常失敗保留，未進正式重驗。使用者已另同意thinking工具鏈MVP，需先證明相容才做新三例。
+
+## E009 thinking 限定 MVP
+
+[thinking驗證](docs/thinking-verification.md)：新opt-in只相對aligned改reasoningEffort none→medium，工具鏈有實際訊號／Python，但三例未成立為可採用修正。原預設仍為none，模型digest／65536／sampler／輸出上限／隔離不變；正式兩介面十例與Windows未執行，不重試替換失敗。

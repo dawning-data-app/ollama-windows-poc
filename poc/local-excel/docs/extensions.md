@@ -113,4 +113,20 @@ missing/corrupt 分別用新 prepare，不續接 session，不複製舊生成程
 
 ## E008：已授權指令對齊 opt-in
 
-使用者已同意僅改agent.excel.prompt，另記新config hash；模型、context、sampler／權限／隔離不變。`ide.py prepare --aligned-workflow --interface chamber ...` 與其他實驗旗標互斥；原預設保留。不要將此選項視為通過：[E008](aligned-verification.md) 正常只探索就結束，負面尚未送出。GUI不可得時保存零session／停止receipt，不用CLI／HTTP代送，不追加「請繼續」修補正常。恢復後先核對原期限與branch／PR，重新prepare尚未送出的fresh案例；保留被中止setup，不重跑失敗正常。
+使用者已同意僅改agent.excel.prompt，另記新config hash；模型、context、sampler／權限／隔離不變。`ide.py prepare --aligned-workflow --interface chamber ...` 與其他實驗旗標互斥；原預設保留。不要將此選項視為通過：[E008](aligned-verification.md) 正常只探索就結束，原GUI不可得斷點／零session setup保留；[後續兩個負面首次補驗](../../../experiments/E008/followup-20261110.md)已完成，仍有路徑／停止／格式錯誤。候選未採用，不用CLI／HTTP代送或追加「請繼續」修補正常，不重試替換失敗；新批次先核對授權範圍、期限與branch／PR。
+
+## E009：已授權的 thinking 限定實驗
+
+`--thinking-probe`／`--thinking-workflow` 是互斥且不改預設的實驗入口；並非已通過完整 Excel 驗收的建議配置。相對 E008 的 aligned config，只將 `reasoningEffort: none` 改為 `medium` 相容值；本機 Ollama 0.31.1 沒有具名 level metadata，須用實際 reasoning parts 與工具完成證據確認，不能只看 capability／設定。主／輔仍為同一本機 Qwen，digest、65536、sampler、steps20、output8192、Excel 指令與隔離不變。新 config SHA-256 為 `802cb27bee00a4a07a65d505a64617a314bd9f99f366cbbeb27b46199145da3b`。
+
+先建立沒有 Excel 的無害探測 workspace；其中 `--case missing` 只是不放工作簿，manifest 的 probe 標記使它不計入 missing 驗收樣本：
+
+```sh
+uv run --locked python ide.py prepare --interface chamber --case missing \
+  --thinking-probe --runs-root /private/tmp/local-excel-extensions/runs/thinking-20261110 \
+  --opencode /private/tmp/local-excel-poc/opencode/node_modules/.bin/opencode
+```
+
+接著按本頁側欄的 server／launch 步驟，從 GUI 貼入這次 `workspace/prompt.txt`，只送一次。代理必須自主寫／執行 runtime_probe.py，印真實 sys.executable／sys.prefix；人工看工具與最後繁中回答，再 capture 原 session。探測 reviewer 接受本次 venv 的 python／python3／python3.12 與純 JSON；Excel 的原嚴格 JSON 區塊／數值／排名契約未放寬。探測不供應程式、不讀工作簿，也不代表 Excel 成功。
+
+只有工具鏈前提成立，才另 prepare `--thinking-workflow --case sales`／`missing`／`corrupt`，各一次 fresh session，沿用原 aligned Excel 需求，不回餵探測輸出、舊答案或程式。一次只開一個本次 backend／視窗；這輪授權先10分鐘、成立後三例最多40分鐘、總50，每例600秒且總截止優先，沒有自動重試或正式十例。實際結果與時序限制見 [thinking 驗證](thinking-verification.md) 與 [E009](../../../experiments/E009/README.md)。所有後續重驗仍依已核准範圍及投入界線處理。
