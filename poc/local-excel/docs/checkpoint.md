@@ -57,3 +57,9 @@ GUI 補驗後最終證據與 PR Lens：`/Users/andrew/.codex/artifacts/local-exc
 新 E005 兩版 MVP 已到事前嘗試上限，沒有成熟修正可凍結，因此正式十例未執行。原始失敗、新 MVP 與錯誤／時間戳見 repair-verification.md；原 b121801 交付不覆蓋。新流程僅實驗 opt-in，原預設及受保護資產不動。
 
 Mac 目標未達成；下一個待決策為一版更短流程、正常／missing／corrupt 各一個 600 秒 fresh MVP，合計 30 分鐘的 E005 建議。尚未授權追加，沒有第三版／模型升級／權限擴張。完成本輪 commit／push／Draft PR 更新後交 human review，不合併、不進 Windows。持久證據：`/Users/andrew/.codex/artifacts/local-excel-repair-20261110`。
+
+## E006 後續狀態（上述待授權為歷史）
+
+使用者已明確授權追加 30 分鐘，E006 一版短流程已執行至期限。正常四次 Python 錯誤、600 秒內未完成；missing 錯誤字串／擴大搜尋違反契約且無最後回答；corrupt 因 GUI 逾時／reset 未送出。兩個已送出 session，沒有重試；不替換歷史失敗。完整三例驗證仍未完成，原定 Mac 目標未達成，正式十例／Windows 均未執行。詳見 [短式驗證紀錄](short-verification.md) 及 [E006](../../../experiments/E006/README.md)。
+
+本輪受限 server 三個埠均已關閉，沒有停止全域 Ollama。保護資產／模型／65536／路由／隔離保留，另存 `/Users/andrew/.codex/artifacts/local-excel-short-20261110`，不覆蓋 E005。下一個待決策為受控環境基線實驗（降低同時視窗負擔，先量 API／GUI／記憶體）或保留 needs-rework；不得自行加時或變更模型／權限。續作前仍須唯讀核對 feature branch／worktree／Draft PR head，不在 dev 實作。

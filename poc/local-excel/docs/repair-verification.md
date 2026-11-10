@@ -40,3 +40,9 @@
 - 維持 Draft PR／human review／needs-rework，不合併；Windows 未開始。
 
 下一個待決策是 E005 的 30 分鐘短式流程 MVP 建議。此次沒有自動增加第三版、擴大模型或權限。失敗只適用本輪長式提示及有限投入，不能宣稱所有 Qwen 或提示都不可行。
+
+## E006 後續狀態（上述待授權為歷史）
+
+使用者已明確授權追加 30 分鐘，E006 一版短流程已執行至期限。正常四次 Python 錯誤、600 秒內未完成；missing 錯誤字串／擴大搜尋違反契約且無最後回答；corrupt 因 GUI 逾時／reset 未送出。兩個已送出 session，沒有重試；不替換歷史失敗。完整三例驗證仍未完成，原定 Mac 目標未達成，正式十例／Windows 均未執行。詳見 [短式驗證紀錄](short-verification.md) 及 [E006](../../../experiments/E006/README.md)。
+
+本輪受限 server 三個埠均已關閉，沒有停止全域 Ollama。保護資產／模型／65536／路由／隔離保留，另存 `/Users/andrew/.codex/artifacts/local-excel-short-20261110`，不覆蓋 E005。下一個待決策為受控環境基線實驗（降低同時視窗負擔，先量 API／GUI／記憶體）或保留 needs-rework；不得自行加時或變更模型／權限。續作前仍須唯讀核對 feature branch／worktree／Draft PR head，不在 dev 實作。

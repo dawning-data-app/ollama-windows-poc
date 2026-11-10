@@ -92,3 +92,17 @@ CLI/TUI 基準保持不變；新介面的結果不能回頭修改既有基準紀
 ## 2026-11-10：未成立的修正候選
 
 [修正候選驗證](repair-verification.md)／[E005](../../../experiments/E005/README.md) 已保留兩個 fresh MVP 的失敗。新增的通用探索／回答規則只透過 `prepare --evidence-workflow` opt-in，沒有預寫分析器；目前**不採為預設、不建議當作已通過方案**。未加旗標的原 IDE 準備與 CLI/TUI 基準不變。兩版嘗試上限後沒有啟動正式十例；下一輪需先處理 E005 的待決策投入範圍，不能以重試或單元測試宣稱達標。
+
+## E006 短式流程：未成立的實驗選項
+
+2026-11-10 使用者追加 30 分鐘，只測一版正常／missing／corrupt fresh MVP。結果見 [短式批次](short-verification.md)；兩例送出、corrupt 未執行，不進正式重驗。原教學預設與 E005 `--evidence-workflow` 不變。只有另獲後續實驗授權時，才用下列 opt-in 準備全新 workspace：
+
+```sh
+uv run --locked python ide.py prepare --short-workflow --interface chamber \
+  --case sales --runs-root /private/tmp/local-excel-extensions/runs \
+  --opencode /private/tmp/local-excel-poc/opencode/node_modules/.bin/opencode
+```
+
+missing/corrupt 分別用新 prepare，不續接 session，不複製舊生成程式。短流程不要求 inspection.json，仍須自主寫 check_excel.py 探索欄名／型別，成功後自主寫 analysis.py，實際執行並只引用輸出。失敗需原始例外與精確指定路徑；不得改查父目錄或其他 session。
+
+本輪遇系統可用記憶體約 6%、本機 API／GUI 逾時，須列環境干擾；請勿為改善效能減少 65536 context、換模型或取消隔離。正常 Python 錯誤、missing 搜尋錯路徑仍屬具體失敗證據。安裝、啟動、36 項測試或沒有 answer.json 都不能替代 GUI 最後正確回答的驗收。

@@ -14,6 +14,8 @@
 
 2026-11-10 修正續作：[新批次紀錄](docs/repair-verification.md)。兩版探索流程 MVP 未成立，正式十例未執行；原結果保留，Mac 驗收目標仍未達成。
 
+使用者追加的 30 分鐘 [E006 短式流程 MVP](docs/short-verification.md) 已到限：正常未完成、missing 錯誤／路徑契約失敗、corrupt 未送出；完整三例仍有缺口，不進正式重驗。
+
 ## 受測 profile
 
 使用專用 `excel` primary agent，明確告知 openpyxl 已安裝，但不提供分析程式或標準答案。主／輔模型都是本機同一 Qwen。採 coding sampler：temperature 0.6、top_p 0.95、top_k 20、min_p 0、presence_penalty 0、repeat_penalty 1；OpenCode 宣告 reasoning 能力與 `reasoning_content` replay，並以 `reasoningEffort: none` 關閉本次對話的 thinking。這個模式組合是本 POC 的測試選擇，採樣數值參照官方 coding 建議。[Qwen 官方 coding 建議](https://huggingface.co/Qwen/Qwen3.5-4B#best-practices)。診斷過程使用過的預設、未調整採樣的 non-thinking 及 thinking profile 分開留證，不算這組配置通過。

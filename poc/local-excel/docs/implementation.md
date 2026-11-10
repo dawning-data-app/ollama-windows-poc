@@ -7,7 +7,7 @@
 | In-Scope | 沿用 uv/openpyxl／資料／oracle；增加固定版官方 extension 與 OpenChamber 的最小可行性及各三輪正常、missing/corrupt；受控 launcher、專用 VS Code profile、使用者授權的 Mac 隔離 MVP、上下文／路由證據、教程與本機圖件。 |
 | Out-Of-Scope | tinyllama 重構、公開 API 變更、Graphify 建圖、工具全域整合、發布與合併。Draft PR 由使用者另行明確授權。 |
 | ReadOnly | 舊 CLI／Windows 腳本／測試／簡報、AGENTS、hooks、runtime、skills、GitHub 設定與 .gitignore。 |
-| Written | 本目錄新資產、experiments/E001、E002、E003、E004 與 E005；run/evidence 在 repo 外系統暫存目錄及本次持久 artifact；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
+| Written | 本目錄新資產、experiments/E001、E002、E003、E004、E005 與 E006；run/evidence 在 repo 外系統暫存目錄及本次持久 artifact；PR Lens 在 repo 外。oracle 不複製至 agent workspace。 |
 | Modify | 本輪可修改此 POC 的 helper／測試／教程／實作與驗證紀錄／圖件；原 baseline poc.py、資料、oracle、uv.lock 保留；根 README 僅入口。 |
 | Deleted | 無既有 tracked 刪除；只清理本次生成的程式或輸出，不刪資料、oracle 或歷史證據。 |
 | TestCase | TC-01 固定 digest／65536／主輔本機路由；TC-02 官方快捷啟動／檔案引用／cwd／config／uv；TC-03 側邊欄最小可行性後真實送出與顯示工具／回答；TC-04 每介面三次 fresh sales、missing、corrupt 與 protected hashes；TC-05 額外上下文／回歸／圖件；TC-06 Mac 人審後 Windows；TC-07 隔離內讀寫／跨 session／oracle／symlink 拒絕與真實工具鏈；未成立須停止執行。 |
@@ -57,3 +57,9 @@ E004 後續：使用者另行授權 15 分鐘／兩次修正，MVP 已成功，�
 ReadOnly 保留 poc.py、sales.xlsx、oracle.json、uv.lock、isolation.py、固定外部 runtime、舊 tinyllama CLI／腳本／測試／簡報。Modify 僅 IDE opt-in／capture 及新模組、測試、教程／紀錄；Deleted 無既有 tracked 刪除。
 
 TC-01／TC-07：兩 MVP 的本機模型、context、原 config、hashes 與 E004 邊界一致。TC-03：兩個 MVP 的真實側欄工具／中止已核對，但沒有完整分析回答。TC-04：正式兩介面三正常＋missing/corrupt 全未執行，前提未成立。TC-05：31/31 POC 回歸，保留舊失敗、凍結 Archify 與本機 PR Lens。TC-06：Mac 未通過、Windows 未開始，Draft／人審。詳細證據及下個待決策見 [修正候選驗證](repair-verification.md)。
+
+## 2026-11-10 E006 追加契約
+
+Goal／Non-Goal／In-Scope／Out-Of-Scope／ReadOnly／Written／Modify／Deleted／TestCase 九欄位保留。Written 增加 shortflow.py、tests/test_shortflow.py、E006／短式批次紀錄；Modify 僅 ide.py 的互斥 opt-in 與 capture dispatch、教程／紀錄。ReadOnly 基準及固定模型／隔離不變；Deleted 無 tracked 刪除。
+
+使用者明確追加 30 分鐘，不是正式十例重驗授權：一版 `--short-workflow`、三種 fresh MVP，期限後停止。TC-01／07：兩個已送出案例 route/model/context 與三個 workspace hashes/policy 一致；missing 嘗試擴大搜尋但未取得其他資料，不代表遵守指定路徑。TC-03：兩例 GUI 送出／工具可見，無完整最後回答；corrupt 未送出。TC-04：正式十例未執行。TC-05：36/36 POC 測試、保留失敗與既有 Archify、Graphify 不建圖、本機 PR Lens。TC-06：Mac 未通過、Windows 未開始、Draft 交人審。詳見 [E006 驗證](short-verification.md)。
