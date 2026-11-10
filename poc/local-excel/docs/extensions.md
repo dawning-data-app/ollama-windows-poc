@@ -110,3 +110,7 @@ missing/corrupt 分別用新 prepare，不續接 session，不複製舊生成程
 ## 單一測試視窗的可觀察基線
 
 [E007](baseline-verification.md) 保留六個舊 POC 視窗關閉後的一次一 server／視窗結果。先確認 server 真正 listen、三組 health/session GET 成功及側欄草稿，再送需求；啟動時 connection refused 與後續成功要分開保留。不要關閉其他使用者程式、重啟全域 Ollama，或以 free 百分比／API 快判定推論與分析通過。每例結束先收證、停止並核對自己的 backend，再關閉該測試視窗；不要預暖下一案例。
+
+## E008：已授權指令對齊 opt-in
+
+使用者已同意僅改agent.excel.prompt，另記新config hash；模型、context、sampler／權限／隔離不變。`ide.py prepare --aligned-workflow --interface chamber ...` 與其他實驗旗標互斥；原預設保留。不要將此選項視為通過：[E008](aligned-verification.md) 正常只探索就結束，負面尚未送出。GUI不可得時保存零session／停止receipt，不用CLI／HTTP代送，不追加「請繼續」修補正常。恢復後先核對原期限與branch／PR，重新prepare尚未送出的fresh案例；保留被中止setup，不重跑失敗正常。

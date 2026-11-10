@@ -67,3 +67,9 @@ Goal／Non-Goal／In-Scope／Out-Of-Scope／ReadOnly／Written／Modify／Delete
 ## E007／限定指令修訂決策
 
 Goal、Non-Goal、In-Scope、Out-Of-Scope、ReadOnly、Written、Modify、Deleted、TestCase 九欄位保留。Written 增加 E007／基線與提案紀錄；Modify 本批只有教程／契約／驗證／續作文件，Deleted 無。TC-01／07 三例 hashes／模型／本機路由／原隔離相符；TC-03 三例實際側欄送出／工具可見，正常與 corrupt 最後回答已見，missing 無最後回答；TC-04 未通過、不進正式十例；TC-05 文件變更不重跑既有36測試；TC-06 Mac 未驗收、不進 Windows。使用者另同意新 opt-in agent.excel.prompt 修改與輸出型別／位置澄清，將另記新 config hash；model/digest/context/sampler／權限／隔離不變，本 E007 未套用。見 [基線紀錄](baseline-verification.md)。
+
+## E008 指令契約執行對照
+
+Goal、Non-Goal、In-Scope、Out-Of-Scope、ReadOnly、Written、Modify、Deleted、TestCase 九欄位保留。使用者明確批准的例外僅 opt-in config agent.excel.prompt；Written 增加 aligned.py、tests/test_aligned.py、E008及紀錄，Modify 僅ide旗標／prepare／capture與教程。原poc.py／isolation.py／資料／oracle／鎖檔與tinyllama資產仍ReadOnly，Deleted無。原config hash保留，另記新34b0dce9…，不得稱原config未變；實際其餘JSON語義均不變。
+
+TC-01正常身份／65536／主輔本機stream／hashes相符，missing僅setup無session；TC-02官方新版未測；TC-03正常真實GUI工具與最後訊息可見，但未分析，missing GUI不可得、corrupt未送；TC-04正式十例未執行；TC-05 40/40 POC、原圖維護與本機PR Lens，不代表E2E；TC-06 Mac未驗收、Windows未開始；TC-07原E004邊界與權限保留，無fallback／放寬。詳見 [E008](aligned-verification.md)。

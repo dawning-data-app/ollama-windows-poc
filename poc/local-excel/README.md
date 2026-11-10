@@ -192,3 +192,5 @@ Extension 增量的 Mac 執行邊界：[隔離架構圖](diagrams/extensions-iso
 上述 OS 邊界涵蓋 ide.py 的 extension sessions；原 CLI/TUI 基準保留其已記錄的非 OS 隔離限制，請勿混稱為受限驗證。
 
 E007 [單視窗基線與三例結果](docs/baseline-verification.md)：GUI／API 可觀察，但正常格式、missing、corrupt 流程仍不通過。使用者已同意限定指令修訂與另一輪三例 MVP；不直接進正式重驗。
+
+[E008 限定指令修訂](docs/aligned-verification.md) 已以新 config hash實作，40/40 POC測試通過；正常只完成探索後自行停止，missing／corrupt因GUI不可得未送出。完整MVP與Mac驗收未完成，原預設保留。

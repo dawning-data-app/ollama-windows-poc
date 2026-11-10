@@ -67,3 +67,7 @@ Mac 目標未達成；下一個待決策為一版更短流程、正常／missing
 ## E007 後續停點
 
 三個新 fresh MVP 已送出與收證，環境 GUI／API 可觀察，正常數值正確但格式不符、missing 無最後回答、corrupt 真實錯誤正確但流程／格式不符。三個 server 均已停止，原失敗不覆蓋；見 [基線紀錄](baseline-verification.md)。持久證據 `/Users/andrew/.codex/artifacts/local-excel-baseline-20261110`。使用者已明確採用限定指令修訂提案，下一批另計最多40分鐘／一候選三例 fresh MVP；不直接正式十例、不改模型／權限／隔離、不在 dev 實作、不合併。
+
+## E008 GUI不可得斷點
+
+候選 source commit d01d474，protocol excel-aligned-v1，新 config hash 34b0dce9…，僅已批准的 agent.excel.prompt改變；40/40 POC通過。正常91.871秒後只給後續計畫，無analysis／answer；missing已準備但session=0，04:25:37 UTC因cgWindowNotFound清理本次server／guard，corrupt未準備。詳見 [E008](aligned-verification.md)。原截止04:49:15 UTC保留，未用盡40分鐘，不重置；使用者解鎖／顯示視窗仍待回覆。續作先唯讀核對feature／branch／Draft PR，未超時可重新prepare零受測session的missing再首次送出，保留舊setup；不重跑失敗正常／補追問。超時則新投入另決策。持久證據 `/Users/andrew/.codex/artifacts/local-excel-aligned-20261110`。正式十例／Windows未開始，不合併。
