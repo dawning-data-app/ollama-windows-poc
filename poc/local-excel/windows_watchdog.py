@@ -208,7 +208,9 @@ def supervise(process, run, system_root, deadline, *, ollama=None, gui=False, po
     resource_stops = ResourceStops()
     opener = build_opener(ProxyHandler({}))
     next_sample = time.monotonic()
-    service_deadline = next_sample + 20
+    service_deadline = next_sample + 45
+    owned_url = f"http://127.0.0.1:{port}{health_path}" if port else None
+    owned_ready = False
     failures = {}
     hung_since = None
     reason = "backend exited"
@@ -278,8 +280,8 @@ def supervise(process, run, system_root, deadline, *, ollama=None, gui=False, po
             health = [ollama + "/api/version"] if ollama else []
             if port:
                 if sockets == [{"address": "127.0.0.1", "pid": identity["pid"]}]:
-                    health.append(f"http://127.0.0.1:{port}{health_path}")
-                elif sockets or now >= service_deadline:
+                    health.append(owned_url)
+                elif sockets or owned_ready or now >= service_deadline:
                     raise GuardStopped("Backend listener is unavailable or differs from the owned loopback socket")
             for url in health:
                 remaining = deadline - time.monotonic()
@@ -289,8 +291,14 @@ def supervise(process, run, system_root, deadline, *, ollama=None, gui=False, po
                     with opener.open(url, timeout=min(5, remaining)) as response:
                         response.read(4096)
                 except OSError:
+                    if url == owned_url and not owned_ready:
+                        if time.monotonic() >= service_deadline:
+                            raise GuardStopped("Owned listener did not become API-ready")
+                        continue
                     failures[url] = failures.get(url, 0) + 1
                 else:
+                    if url == owned_url:
+                        owned_ready = True
                     failures[url] = 0
                 if failures[url] >= 2:
                     raise GuardStopped(f"Two consecutive health checks failed for {url}")
