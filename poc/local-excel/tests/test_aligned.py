@@ -45,5 +45,5 @@ class AlignedContractTests(unittest.TestCase):
         for negative in (False, True):
             text = aligned.prompt(folder, negative)
             self.assertIn('region_ranking（依金額遞減的區域名稱陣列）', text)
-            self.assertIn('/private/tmp/example/workspace/answer.json（本次 workspace 內）', text)
+            self.assertIn(f'{folder.parent / "answer.json"}（本次 workspace 內）', text)
             self.assertIn('stdout 僅印一個錯誤 JSON', text)
