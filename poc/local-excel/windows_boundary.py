@@ -175,9 +175,10 @@ if marker.read_text(encoding="utf-8") != "無答案":
     raise AssertionError("workspace read/write failed")
 marker.unlink()
 bash = os.environ["OPENCODE_GIT_BASH_PATH"]
-result = subprocess.run([bash, "--noprofile", "--norc", "-c",
-    "uv run --locked --offline python -c 'import sys,openpyxl; print(sys.executable); print(openpyxl.__version__)'"],
-    check=True, timeout=10, capture_output=True, encoding="utf-8")
+login = 'shopt -s expand_aliases; [[ -f ~/.bashrc ]] && source ~/.bashrc >/dev/null 2>&1 || true; cd -- "$1"; eval "$2"'
+command = "uv run --locked --offline python -c 'import sys,openpyxl; print(sys.executable); print(openpyxl.__version__)'"
+result = subprocess.run([bash, "-l", "-c", login, "opencode", str(Path.cwd()), command],
+                        check=True, timeout=10, capture_output=True, encoding="utf-8")
 runtime, version = result.stdout.strip().splitlines()
 if Path(runtime) != Path(sys.executable) or version != "3.1.5":
     raise AssertionError("Git Bash resolved a different locked runtime")
