@@ -42,6 +42,15 @@ class WindowsTests(unittest.TestCase):
                 api.assert_not_called()
                 launch.assert_not_called()
 
+    def test_vscode_home_is_fresh_and_excludes_provider_keys(self):
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "fixture-only", "OPENCODE_CONFIG_CONTENT": "unexpected"}):
+            env = windows_poc.gui_environment(self.run)
+        self.assertNotIn("OPENAI_API_KEY", env)
+        self.assertNotIn("OPENCODE_CONFIG_CONTENT", env)
+        self.assertEqual(Path(env["USERPROFILE"]), self.run / "vscode-home")
+        self.assertTrue(Path(env["LOCALAPPDATA"]).is_dir())
+        self.assertTrue(Path(env["TEMP"]).is_dir())
+
     def test_win32_quoting_and_job_stop_include_descendant(self):
         marker = self.workspace / "銷售 資料.txt"
         script = (

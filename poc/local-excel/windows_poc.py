@@ -242,6 +242,26 @@ def serve(run):
                            "--port", str(CHAMBER_PORT)], port=CHAMBER_PORT)
 
 
+def gui_environment(run):
+    # VS Code and the extension host get a separate home, outside the agent's
+    # filesystem grants and independent of prior GUI sessions or user settings.
+    names = ("SystemRoot", "WINDIR", "SystemDrive", "COMSPEC", "PATHEXT", "ProgramFiles",
+             "ProgramFiles(x86)", "ProgramData", "PROCESSOR_ARCHITECTURE", "NUMBER_OF_PROCESSORS")
+    env = {key: os.environ[key] for key in names if key in os.environ}
+    home = run / "vscode-home"
+    config = home / "Roaming"
+    local = home / "Local"
+    temporary = home / "Temp"
+    for path in (config, local, temporary):
+        path.mkdir(parents=True)
+    env.update(
+        HOME=str(home), USERPROFILE=str(home), APPDATA=str(config), LOCALAPPDATA=str(local),
+        TEMP=str(temporary), TMP=str(temporary),
+        PATH=str(Path(env["SystemRoot"]) / "System32"),
+    )
+    return env
+
+
 def launch_gui(run):
     run, manifest, _ = checked_run(run)
     interface = manifest["interface"]
@@ -252,7 +272,8 @@ def launch_gui(run):
     workspace = run / "workspace"
     paths = manifest["paths"]
     profile = Path(paths["profiles"]) / interface
-    flags = ["--user-data-dir", str(profile / "data"), "--extensions-dir", str(profile / "extensions")]
+    user_data = run / "vscode-data"
+    flags = ["--user-data-dir", str(user_data), "--extensions-dir", str(profile / "extensions")]
     packages = [poc.read_json(path) for path in (profile / "extensions").glob("*/package.json")]
     versions = [f'{package["publisher"]}.{package["name"]}@{package["version"]}' for package in packages]
     if versions != [PROFILES[interface]]:
@@ -285,14 +306,17 @@ def launch_gui(run):
                 raise RuntimeError("OpenChamber endpoint is not the pinned backend")
         settings["openchamber.apiUrl"] = endpoint
         settings["openchamber.opencodeBinary"] = str(run / "bin/blocked-unmanaged-backend.exe")
-    profile_settings = profile / "data/User/settings.json"
+    profile_settings = user_data / "User/settings.json"
     profile_settings.parent.mkdir(parents=True, exist_ok=True)
     poc.write_json(profile_settings, {"telemetry.telemetryLevel": "off", "update.mode": "none",
                                      "extensions.autoUpdate": False, "extensions.autoCheckUpdates": False})
     location = run / "session.code-workspace"
     poc.write_json(location, {"folders": [{"path": str(workspace)}], "settings": settings})
-    child = subprocess.Popen([paths["code"], *flags, "--new-window", str(location)], cwd=workspace)
-    poc.write_json(run / "evidence/vscode-launch.json", {"pid": child.pid, "profile": str(profile), "cwd": str(workspace)})
+    child = subprocess.Popen([paths["code"], *flags, "--new-window", str(location)],
+                             cwd=workspace, env=gui_environment(run))
+    poc.write_json(run / "evidence/vscode-launch.json",
+                   {"pid": child.pid, "extensions_profile": str(profile), "user_data": str(user_data),
+                    "cwd": str(workspace)})
 
 
 def finish_gui(run):
