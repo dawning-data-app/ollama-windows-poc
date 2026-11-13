@@ -107,6 +107,51 @@ corrupt 的合成 `.xlsx` 刻意使用純文字內容，預期會觸發 `BadZipF
 
 4. 用 `$Evidence` 下的 `session-messages.json`、`analysis-01.py`、`python-attempt-01.json` 和 `verified-answer.json` 核對單筆送出、生成原始碼、實際執行及側欄回答。正常案比對 oracle，異常案核對原始路徑與實際例外。用 `preload.json` 與 `verified-answer.json` 確認 context，等 runner 收尾後檢查 `stops.jsonl` 再重跑下一案。
 
+## 官方 OpenCode TUI 三案功能驗證（8192 context）
+
+三案均在原生 Windows 以官方 OpenCode VS Code 擴充套件的 `Open opencode` 命令啟動 TUI，各送出一次。OpenCode 自行撰寫 `analysis-01.py` 並透過 `excelpython_execute` 執行，工具輸入與執行檔相符。三案不計入正式驗收。E010 的隔離、65,536 context 與正式案例判準照舊。[Draft PR #2 的驗證紀錄](https://github.com/dawning-data-app/ollama-windows-poc/pull/2#官方-tui-三案功能驗證總表) · [E010](../../../experiments/E010/README.md)
+
+使用同一台原生 Windows 主機與既有 POC worktree。沿用 VS Code 1.137.0、`sst-dev.opencode@1.0.0`、OpenCode 1.19.5、Ollama 0.31.1、Node 24.19.0、CPython 3.12.12／openpyxl 3.1.5、Git for Windows，以及已準備的 `qwen3.5:9b-q4_K_M` model store。runner 使用專用 loopback Ollama，以 CPU 載入衍生文字模型，設定 `use_mmap=true`、`LLAMA_ARG_REPACK=0` 與 `num_batch=256`。預載與驗證答案時均以 `/api/ps` 核對實際 **8192 context** 與 manifest digest `2c0b40d01b97bad9eb56ff380478a61fbd80ed626229b223cb362b8ecf558e60`。
+
+| 案例 | 預期結果 | 本機證據 |
+| --- | --- | --- |
+| 正常 | 實際讀取合成 `sales.xlsx`，Python exit 0，stdout 與 TUI 最終 JSON 均符合 oracle。 | `D:\codex\official-opencode-tui-1794537994488` 下的 `HANDOFF.md` 和各案收據。Session `ses_e2d2ea9fdffeIGQmHWRu2fdLGa`。 |
+| missing | `os.scandir` 對 `銷售 資料` 取得 `FileNotFoundError`（WinError 3、errno 2），TUI 以繁中回報路徑與目錄不存在。 | 共用 ZIP 的 `missing/`。Session `ses_e2d1dff3dffemxzGClDsfBNK4U`。 |
+| corrupt | `openpyxl.load_workbook` 嘗試開啟 `銷售 資料\sales.xlsx` 並取得 `BadZipFile`，TUI 以繁中回報路徑與檔案格式錯誤。 | 共用 ZIP 的 `corrupt/`。Session `ses_e2d155464ffe9qMlx3ebgBu2Xj`。 |
+
+missing 與 corrupt 使用修正後的 UTF-8 MCP。共用證據 ZIP 位於 `D:\codex\official-opencode-tui-errors-1794538977939-evidence.zip`，SHA-256 為 `83e1f33d17ec3f6fb3f4aead94f2abeaaabff638bed529fda06c9a4b4d58f7e3`。前次失敗保存在 `D:\codex\official-opencode-tui-1794537290354`。行號引用只記錄 `@context-probe.txt#L2-4` 出現在 TUI 草稿。該引用未送給模型，附件與精確行範圍內容均未驗證。
+
+1. 在原生 PowerShell 選一案並建立空白收證目錄。正常案使用原始證據目錄，異常案可用本機證據目錄或核對 ZIP 的 SHA-256 後解壓。使用 `$Bundle` 根目錄的 runner，並讓 `excel_python_mcp.py`、`observe-tui-session.cjs` 與 runner 留在同一目錄。
+
+   ```powershell
+   $Case = 'normal' # normal、missing 或 corrupt
+   $Run = Join-Path 'D:\codex' ('official-tui-recheck-' + $Case + '-' + [guid]::NewGuid().ToString('N'))
+   New-Item -ItemType Directory -Path $Run -ErrorAction Stop | Out-Null
+   $Py = 'D:\code\python\ollama-windows-poc-local\tools\locked-evaluator\Scripts\python.exe'
+   if ($Case -eq 'normal') {
+       $Bundle = 'D:\codex\official-opencode-tui-1794537994488'
+   } elseif ($Case -in 'missing', 'corrupt') {
+       $Bundle = 'D:\codex\official-opencode-tui-errors-1794538977939'
+   } else {
+       throw 'Choose normal, missing, or corrupt'
+   }
+   ```
+
+2. 執行本案對應的一條命令。每次只開一個測試視窗。
+
+   ```powershell
+   # 正常
+   & $Py -I -B -u (Join-Path $Bundle 'smoke-official-opencode-tui.py') $Run
+   # missing
+   & $Py -I -B -u (Join-Path $Bundle 'smoke-official-opencode-tui-errors.py') missing $Run
+   # corrupt
+   & $Py -I -B -u (Join-Path $Bundle 'smoke-official-opencode-tui-errors.py') corrupt $Run
+   ```
+
+3. 依 `$Run` 下的 `ready.json` 找到指定 VS Code 視窗。若詢問 Workspace Trust，只信任當次合成資料工作區。在 Command Palette 執行 `Open opencode`，將該次 `prompt` 原樣貼到官方 TUI，按一次 Enter。
+
+4. 等待正常案的 `answer_verified` 或異常案的 `answer_checked`，再等 runner 收尾。比對 `extension-activation.txt`、`session-messages.json`、`analysis-01.py`、`python-attempt-01.json` 與 `verified-answer.json`，核對單筆提交、原始碼、實際執行和同一 session 的回答。查看 `preload.json` 與 `verified-answer.json` 的 context，並核對 `stops.jsonl`。兩個異常案的 Python 預期 exit 1，runner 與停止收據應為 exit 0。
+
 ## 九欄位契約
 
 | 欄位 | 本輪範圍 |
