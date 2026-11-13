@@ -152,6 +152,50 @@ missing 與 corrupt 使用修正後的 UTF-8 MCP。共用證據 ZIP 位於 `D:\c
 
 4. 等待正常案的 `answer_verified` 或異常案的 `answer_checked`，再等 runner 收尾。比對 `extension-activation.txt`、`session-messages.json`、`analysis-01.py`、`python-attempt-01.json` 與 `verified-answer.json`，核對單筆提交、原始碼、實際執行和同一 session 的回答。查看 `preload.json` 與 `verified-answer.json` 的 context，並核對 `stops.jsonl`。兩個異常案的 Python 預期 exit 1，runner 與停止收據應為 exit 0。
 
+## 官方 OpenCode TUI 行號附件與快捷鍵（8192 context）
+
+這次使用原生 Windows 上已安裝的 VS Code 1.141.0 和獨立 profile，搭配官方擴充套件 `sst-dev.opencode@1.0.0`、OpenCode 1.19.5、Ollama 0.31.1、Node 24.19.0 與 CPython 3.12.12。專用 loopback Ollama 以 CPU 載入既有的衍生文字模型，設定 `use_mmap=true`、`LLAMA_ARG_REPACK=0`、`num_batch=256`。預載及回答後均核對實際 **8192 context** 和模型 digest `2c0b40d01b97bad9eb56ff380478a61fbd80ed626229b223cb362b8ecf558e60`。本節是功能驗證，不計入正式驗收。E010 依原判準。[Draft PR #2](https://github.com/dawning-data-app/ollama-windows-poc/pull/2) · [E010](../../../experiments/E010/README.md)
+
+| 操作 | 實測結果 |
+| --- | --- |
+| TUI 自動完成選取 `@context-probe.txt#2-4` | **附件與行範圍已驗證。** 按 Tab 選取候選，再送出一筆訊息。Session `ses_e2ccf98d4ffeg5Y3WOA6iQ8OZi` 有一個 `text/plain` 附件，URL 帶 `?start=2&end=4`，OpenCode 以 `offset=2`、`limit=3` 讀取。兩筆 HTTP 200 的實際 Ollama 請求都只有第 2–4 行標記，第 1、5 行標記均未出現。模型逐行照原文回覆。 |
+| `Ctrl+Esc` | Windows 開啟開始功能表。回到 VS Code 後，可用命令面板的官方 `Open opencode` 啟動 TUI。 |
+| `Ctrl+Shift+Esc` | Windows 將工作管理員帶到前景。回到 VS Code 後，可用命令面板的官方 `Open opencode in new tab` 另開 TUI。 |
+| `Ctrl+Alt+K` | 在編輯器選取第 2–4 行後，TUI 插入 `@context-probe.txt#L2-4`。**本次只記錄草稿**，確認後清除。 |
+
+成功證據 ZIP 為 `D:\codex\official-opencode-tui-autocomplete-1794544258537-evidence.zip`，SHA-256 為 `f8d0c8a1b894a97b8b6711858e13c3cb79fba7997b2af58b5bf4f490c69f99dd`。在 ZIP 的 `evidence/` 查看 `review.json`、`session-messages.json`、兩筆 `ollama-request-*.json`、三組快捷鍵收據及 `teardown-verified.json`。
+
+首輪停在 Workspace Trust，當輪未送出。原始證據 ZIP 為 `D:\codex\official-opencode-tui-autocomplete-1794543511759-evidence.zip`，SHA-256 為 `322a6064176feace57b4b6275961869f161044b5fb93f90d887da8df8fe137e1`。先前直接送出 `#L2-4` 的測試及 HTTP API 對照仍可在 PR 查閱。[Draft PR #2 舊紀錄](https://github.com/dawning-data-app/ollama-windows-poc/pull/2#官方-tui-行號引用送出測試)
+
+### 離線 ripgrep 重跑
+
+離線環境第一次開啟 TUI 時，自動完成顯示 `No matching items`，OpenCode 日誌記錄嘗試下載 ripgrep。實測將既有 POC 的 VS Code 1.137.0 附帶的 ripgrep 15.0.0 放到本輪的 `cache/opencode/bin/rg.exe`，再用 `Open opencode in new tab` 另開 TUI，候選就出現了。下方的離線 runner 已做語法檢查，會在啟動前做同一份複製並核對 SHA-256 `8c121acc4d703ca62d394ab38a03771156370b7edeab0c379044482f07e133cf`。
+
+1. 在同一台原生 Windows 核對成功 ZIP 的 SHA-256。使用原始證據目錄，或將 ZIP 解壓後把 `$Bundle` 指向解壓根目錄。讓 runner、`observe-tui-session.cjs` 和 `verify-tui-autocomplete.ps1` 留在同一目錄。在原生 PowerShell 啟動 runner，記下畫面顯示的收證目錄。
+
+   ```powershell
+   $Bundle = 'D:\codex\official-opencode-tui-autocomplete-1794544258537'
+   $Run = Join-Path 'D:\codex' ('official-tui-autocomplete-recheck-' + [guid]::NewGuid().ToString('N'))
+   New-Item -ItemType Directory -Path $Run -ErrorAction Stop | Out-Null
+   $Py = 'D:\code\python\ollama-windows-poc-local\tools\locked-evaluator\Scripts\python.exe'
+   $Code = Join-Path $env:LOCALAPPDATA 'Programs\Microsoft VS Code\Code.exe'
+   $CodeVersion = (Get-Item -LiteralPath $Code -ErrorAction Stop).VersionInfo.ProductVersion
+   Write-Host "收證目錄 $Run"
+   & $Py -I -B -u (Join-Path $Bundle 'smoke-official-opencode-tui-autocomplete-offline.py') $Run $Code $CodeVersion
+   ```
+
+2. 依 `$Run` 下的 `ready.json` 找到視窗與提示。若詢問 Workspace Trust，只信任本輪的暫存合成工作區。在 VS Code 命令面板執行 `Open opencode`。依表實測快捷鍵。測 `Ctrl+Alt+K` 時，從 `context-probe.txt` 第 2 行開頭選到第 4 行末尾，確認出現 `#L2-4` 草稿，再清除草稿。
+
+3. 在空白 TUI 輸入 `@context-probe.txt#2-4`，等候選出現，按 **Tab** 選取，再接上本輪 `ready.json` 的 `prompt`。確認草稿已有檔案引用後，按 **Enter** 一次。
+
+4. 等 runner 輸出 `reference_measured`。在另一個 PowerShell 將 `$Bundle` 和 `$Run` 設為第一個視窗所用的路徑，執行下方命令。核對 `review.json` 的 `userMessages=1`、`fileParts=1`、`filePartExact=true`、`wireExact=true`、`finalExact=true` 和 `context=8192`，再等 runner 收尾並核對 `stops.jsonl`。
+
+   ```powershell
+   & (Join-Path $Bundle 'verify-tui-autocomplete.ps1') -Evidence $Run
+   if (-not $?) { throw 'TUI attachment verification failed' }
+   New-Item -ItemType File -Path (Join-Path $Run 'finish.request') -ErrorAction Stop | Out-Null
+   ```
+
 ## 九欄位契約
 
 | 欄位 | 本輪範圍 |
