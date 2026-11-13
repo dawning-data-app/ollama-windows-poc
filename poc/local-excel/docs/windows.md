@@ -196,6 +196,16 @@ missing 與 corrupt 使用修正後的 UTF-8 MCP。共用證據 ZIP 位於 `D:\c
    New-Item -ItemType File -Path (Join-Path $Run 'finish.request') -ErrorAction Stop | Out-Null
    ```
 
+### 離線 runner 首次開啟實測
+
+2026-11-13 依上方步驟在原生 Windows 實跑離線 runner。VS Code 啟動前已將 ripgrep 15.0.0 放入專用的 `cache/opencode/bin/rg.exe` 並核對 SHA-256。從命令面板執行官方 `Open opencode`，第一次開啟的 TUI 就顯示 `context-probe.txt#2-4` 候選。以 **Tab** 選取 `@context-probe.txt#2-4` 後按 **Enter** 一次送出。OpenCode 日誌記錄一次啟動，沒有 ripgrep 下載記錄。
+
+Session `ses_e2cc11cccffe525k1wZ93IHS0z` 有一筆使用者訊息和一個 `text/plain` 附件，附件 URL 帶 `?start=2&end=4`。兩筆 HTTP 200 的 Ollama 請求都只包含第 2–4 行的標記，第 1、5 行均未出現，最終回答逐行符合原文。預載與回答後均確認 **8192 context**，沿用 `use_mmap=true`、`LLAMA_ARG_REPACK=0` 和 `num_batch=256`。
+
+本機證據 ZIP 為 `D:\codex\official-tui-autocomplete-recheck-1794545220999-evidence.zip`，SHA-256 為 `55112add3eab83b65ff8345de40822e387f48cc3a0e91ca16ac049b94b8e0d4c`。ZIP 內的 `first-open-preflight.json`、`first-open-process.json` 和 `first-open-candidate.json` 記錄預置快取與首次開啟。`review.json`、`session-messages.json` 和兩筆 `ollama-request-*.json` 可核對附件與行範圍。
+
+本次為功能驗證，不計入正式驗收。E010 依原判準。[Draft PR #2 的重跑紀錄](https://github.com/dawning-data-app/ollama-windows-poc/pull/2#離線-runner-首次開啟重跑) · [E010](../../../experiments/E010/README.md)
+
 ## 九欄位契約
 
 | 欄位 | 本輪範圍 |
