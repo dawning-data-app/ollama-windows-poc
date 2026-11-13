@@ -1,5 +1,22 @@
 # E010 原生 Windows 工具鏈與 OS 隔離 MVP
 
+## 2026-11-13 功能驗證結案
+
+**Windows 端到端功能驗證通過，本次結案無需 IT 介入。** AppContainer 診斷依使用者指示停止。受限檔案、Python 與 named pipe 對照已有部分探測通過，完整 AppContainer 官方 TUI 流程、E010 正式隔離與 65,536 context 均未驗收。功能案例不計入正式驗收。
+
+下方保留 2026-11-12 的前置判準與當時狀態。
+
+| AppContainer 探測 | 實測結果 |
+| --- | --- |
+| 官方入口 | 官方擴充套件送出裸 `opencode`。修正 launcher 後，無埠入口已驗證能抵達 AppContainer 政策檢查。 |
+| 檔案與子程序 | 專用 profile 與 run ACL 已實測。工作區映射到 `Y:\` 後，受限 OpenCode 能讀寫工作區並啟動鎖定 Python。已核對子程序的 SID 與 Job，外部 canary 的直接讀取與 junction 穿越均遭拒絕。 |
+| 完整官方 TUI | 明確傳入 `Y:\` 和 `PWD` 後，仍在對 D 槽根目錄做 `lstat` 時回 `EPERM`、exit 1，未建立 Excel session。修正版診斷執行檔在 `CreateProcessW` 回 Win32 4551，Code Integrity 3077 記錄企業政策阻擋。獨立 VHD 掛載回 Win32 1314。 |
+| 本機推論對照 | 桌面控制端前後均可連 `127.0.0.1:21434`，AppContainer 直連回 Winsock 10060。受限 Bun 經獨立 named pipe 完成一次 Qwen 推論，收到 HTTP 200 和預期答案 `42`。OpenCode provider 的 named pipe 整合未驗證。WFP 和 loopback 豁免均未修改。 |
+
+完整診斷與原始證據索引位於 `D:/code/python/ollama-windows-poc-local/evidence/windows-opencode-qwen-handoff-20261113.md`。
+
+功能案例及證據檔名見 [Windows 教程的結案紀錄](../../poc/local-excel/docs/windows.md#2026-11-13-功能驗證結案)。
+
 ## 驗證什麼
 
 設計日期 2026-11-12（台北）。基準 `e41369371053702483b964a6cac575e4f176bd04`。問題是固定的 Windows OpenCode 能否在同一原生 OS 邊界內讀寫本次 workspace、執行鎖定 Python 並只連到 POC Ollama，同時讓兩個 VS Code 入口保有真實互動。

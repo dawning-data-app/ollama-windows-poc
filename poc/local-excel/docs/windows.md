@@ -2,6 +2,18 @@
 
 Windows 增量以 `e41369371053702483b964a6cac575e4f176bd04` 為 Mac 對照。用獨立的 `feat/andrew/local-excel-windows` worktree。以下命令在 `poc/local-excel` 執行。受測 run、工具、模型、控制技能與證據使用不同的 repo 外目錄。
 
+## 2026-11-13 功能驗證結案
+
+**Windows 端到端功能驗證通過，本次結案無需 IT 介入。** AppContainer 診斷依使用者指示停止。受限檔案、Python 與 named pipe 對照已有部分探測通過，完整 AppContainer 官方 TUI 流程、E010 正式隔離與 65,536 context 均未驗收。功能案例不計入正式驗收。
+
+2026-11-13 在原生 Windows 的一般桌面程序中，操作者用 VS Code 1.137.0、官方 `sst-dev.opencode@1.0.0` 的 `Open opencode` 命令開啟 OpenCode 1.19.5 TUI，送出一次合成 Excel 提示。Session 為 `ses_e2d2ea9fdffeIGQmHWRu2fdLGa`。經本機 relay 呼叫 Ollama 0.31.1，三筆請求均回 HTTP 200。`/api/ps` 核對 Qwen 3.5 9B 衍生文字模型 `qwen3.5:9b-q4_k_m-text-smoke` 的實際 context 為 8,192，digest 為 `2c0b40d01b97bad9eb56ff380478a61fbd80ed626229b223cb362b8ecf558e60`。
+
+OpenCode 生成 `analysis-01.py` 並呼叫 `excelpython_execute` 一次。CPython 3.12.12 以 openpyxl 實際開啟合成工作簿，exit 0、stderr 空白。Python stdout 和同一 session 的最終回答均符合獨立 oracle，總額 12,000，1 月 3,300、2 月 8,700，北／中／南分別為 2,800、4,000、5,200，排名南、中、北。
+
+功能證據位於 `D:/codex/official-opencode-tui-1794537994488/`。以 `extension-activation.txt` 核對官方入口，`session-messages.json` 核對提交及回答，`analysis-01.py` 和 `python-attempt-01.json` 核對實際執行，`verified-answer.json` 核對模型、HTTP 狀態與答案。
+
+AppContainer 診斷及原始證據索引見 [E010 結案紀錄](../../../experiments/E010/README.md#2026-11-13-功能驗證結案)。
+
 ## 固定工具與檔案
 
 - 使用 Git for Windows、VS Code 1.137.0、Node 24.19.0、uv 0.9.2、CPython 3.12.12、OpenCode 1.19.5、Ollama 0.31.1、`sst-dev.opencode@1.0.0`、`fedaykindev.openchamber@1.24.2`。用官方 x64 資產與發行方可取得的 SHA-256／簽章。VS Code 分別使用專用的 `official` 和 `chamber` extensions 目錄。各次 GUI 啟動另建獨立的 VS Code home 與 user-data。
