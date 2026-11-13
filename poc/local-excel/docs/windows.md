@@ -181,6 +181,8 @@ missing 與 corrupt 使用修正後的 UTF-8 MCP。共用證據 ZIP 位於 `D:\c
 
 ### 離線 ripgrep 重跑
 
+正式 Windows launcher 的 `prepare` 會從已固定的 VS Code 1.137.0 資產驗證並複製 ripgrep 15.0.0 到每次執行的 `cache/opencode/bin/rg.exe`。OpenCode 啟動前會核對副本的 SHA-256。
+
 離線環境第一次開啟 TUI 時，自動完成顯示 `No matching items`，OpenCode 日誌記錄嘗試下載 ripgrep。實測將既有 POC 的 VS Code 1.137.0 附帶的 ripgrep 15.0.0 放到本輪的 `cache/opencode/bin/rg.exe`，再用 `Open opencode in new tab` 另開 TUI，候選就出現了。下方的離線 runner 已做語法檢查，會在啟動前做同一份複製並核對 SHA-256 `8c121acc4d703ca62d394ab38a03771156370b7edeab0c379044482f07e133cf`。
 
 1. 在同一台原生 Windows 核對成功 ZIP 的 SHA-256。使用原始證據目錄，或將 ZIP 解壓後把 `$Bundle` 指向解壓根目錄。讓 runner、`observe-tui-session.cjs` 和 `verify-tui-autocomplete.ps1` 留在同一目錄。在原生 PowerShell 啟動 runner，記下畫面顯示的收證目錄。

@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -20,6 +21,8 @@ import windows_watchdog as watchdog
 
 WORKBOOK_SHA = "9d88b6da7175a8e86188b359cf663b16610cdadeca485a9b773f71bb74858fc4"
 LOCK_SHA = "02428609b416acb248ddbf9cde9ca2b9365c8237aff057ad0a9c9e3554d20926"
+RIPGREP_SHA = "8c121acc4d703ca62d394ab38a03771156370b7edeab0c379044482f07e133cf"
+RIPGREP_CACHE_PATH = "cache/opencode/bin/rg.exe"
 CHAMBER_PORT = 21435
 PROFILES = {"official": "sst-dev.opencode@1.0.0", "chamber": "fedaykindev.openchamber@1.24.2"}
 CONTEXT_PROBE = "POC_CONTEXT_ONLY: synthetic Excel environment; no analysis or expected answers.\n"
@@ -32,6 +35,8 @@ def tools_at(root, git_root):
         "opencode_root": root / "opencode-1.19.5",
         "git_root": git_root,
         "code": root / "vscode-1.137.0/Code.exe",
+        "ripgrep": root / ("vscode-1.137.0/645f29cc31/resources/app/node_modules.asar.unpacked/"
+                           "@vscode/ripgrep-universal/bin/win32-x64/rg.exe"),
         "ollama": root / "ollama-0.31.1/ollama.exe",
         "uv_cache": root / "uv-cache",
         "profiles": root / "vscode-profiles",
@@ -91,6 +96,11 @@ def verify_inputs(run, manifest):
     for key, digest in manifest["tool_hashes"].items():
         if poc.sha256(Path(manifest["paths"][key])) != digest:
             raise RuntimeError(f"Windows tool binary changed: {key}")
+    # Older prepared manifests predate the per-run ripgrep cache.
+    if "ripgrep" in manifest["paths"]:
+        ripgrep = boundary.safe_path(run, run / RIPGREP_CACHE_PATH)
+        if not ripgrep.is_file() or poc.sha256(ripgrep) != RIPGREP_SHA:
+            raise RuntimeError("Windows run ripgrep cache is missing or differs from the pinned SHA-256")
 
 
 def prepare(interface, case, runs_root, tools_root, git_root, deadline):
@@ -99,6 +109,8 @@ def prepare(interface, case, runs_root, tools_root, git_root, deadline):
     if poc.sha256(poc.ROOT / "uv.lock") != LOCK_SHA or poc.sha256(poc.ROOT / "sales.xlsx") != WORKBOOK_SHA:
         raise ValueError("Source workbook or uv.lock differs from the pinned SHA-256")
     paths = tools_at(tools_root, git_root)
+    if poc.sha256(Path(paths["ripgrep"])) != RIPGREP_SHA:
+        raise ValueError("Bundled Windows ripgrep differs from the pinned SHA-256")
     run = poc.prepare(runs_root, case)
     for name in ("home", "config", "state", "cache", "tmp", "evidence", "bin"):
         (run / name).mkdir()
@@ -123,6 +135,11 @@ def prepare(interface, case, runs_root, tools_root, git_root, deadline):
                "assert openpyxl.__version__=='3.1.5'; print(sys.executable); print(shutil.which('python3') or '')"]
     if poc.command(command, run, "python-runtime", 20, env).returncode:
         raise RuntimeError("Pinned Python/openpyxl probe failed")
+    ripgrep = run / RIPGREP_CACHE_PATH
+    ripgrep.parent.mkdir(parents=True)
+    shutil.copyfile(paths["ripgrep"], ripgrep)
+    if poc.sha256(ripgrep) != RIPGREP_SHA:
+        raise RuntimeError("Copied Windows ripgrep differs from the pinned SHA-256")
     version = poc.command([paths["opencode"], "--version"], run, "opencode-version", 15, env)
     if version.returncode or (run / "evidence/opencode-version.stdout").read_text().strip() != "1.19.5":
         raise RuntimeError("Pinned native OpenCode version probe failed")

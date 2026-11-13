@@ -1,10 +1,12 @@
 """Native Windows regressions; no policy provisioning or model calls."""
 
 from ctypes import wintypes
+from datetime import datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
 import socket
+import subprocess
 import sys
 import tempfile
 import time
@@ -118,6 +120,35 @@ class WindowsTests(unittest.TestCase):
                     self.fail("A second backend acquired the lease")
                 self.assertTrue(lease.is_file())
             self.assertFalse(lease.exists())
+
+    def test_prepare_seeds_and_verifies_isolated_ripgrep_cache(self):
+        ripgrep = self.evidence / "rg.exe"
+        ripgrep.write_bytes(b"fixture ripgrep")
+        digest = windows_poc.poc.sha256(ripgrep)
+        paths = dict.fromkeys(("python", "uv", "opencode", "bash", "code", "ollama", "ripgrep",
+                               "uv_cache", "uv_root", "opencode_root", "git_root", "python_root"), str(ripgrep))
+
+        def command(argv, run, name, timeout, env):
+            if name == "opencode-version":
+                self.assertEqual((Path(env["XDG_CACHE_HOME"]) / "opencode/bin/rg.exe").read_bytes(),
+                                 ripgrep.read_bytes())
+                (run / "evidence/opencode-version.stdout").write_text("1.19.5", encoding="utf-8")
+            return subprocess.CompletedProcess(argv, 0)
+
+        deadline = datetime.now(timezone.utc) + timedelta(minutes=1)
+        with (patch("windows_poc.tools_at", return_value=paths),
+              patch("windows_poc.poc.command", side_effect=command) as run_command):
+            with self.assertRaisesRegex(ValueError, "Bundled Windows ripgrep"):
+                windows_poc.prepare("official", "sales", self.run, self.run, self.run, deadline)
+            run_command.assert_not_called()
+            with patch("windows_poc.RIPGREP_SHA", digest):
+                run = windows_poc.prepare("official", "sales", self.run, self.run, self.run, deadline)
+                manifest = windows_poc.poc.read_json(run / "manifest.json")
+                cache = run / "cache/opencode/bin/rg.exe"
+                self.assertEqual(windows_poc.poc.sha256(cache), digest)
+                cache.write_bytes(b"modified")
+                with self.assertRaisesRegex(RuntimeError, "ripgrep cache"):
+                    windows_poc.verify_inputs(run, manifest)
 
     def test_vscode_home_is_fresh_and_excludes_provider_keys(self):
         with patch.dict(os.environ, {"OPENAI_API_KEY": "fixture-only", "OPENCODE_CONFIG_CONTENT": "unexpected"}):
