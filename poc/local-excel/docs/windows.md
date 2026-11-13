@@ -61,6 +61,52 @@ $Run = & $Py windows_poc.py prepare --interface chamber --case sales `
 - 各案保留 prompt、fixture、uv.lock、config 的前後 hashes，實際 digest、主輔推論路由、Python source／stdout／stderr／exit、原始 user parts、附加上下文與 GUI 證據。取得全部證據才判斷成功。無最後回答、假例外、額外錯誤敘述和繞查其他路徑均保留為失敗樣本。
 - 所有測試完成或停止後，以 `windows_poc.py stop-ollama <run>` 請擁有專用 21434 的 supervisor 停止。檢查埠、PID 及停止收據，再交公司管理方撤除已授權的 POC 政策。
 
+## OpenChamber 側欄三案功能驗證（8192 context）
+
+三案均在原生 Windows 的 VS Code OpenChamber 側欄各送出一次。OpenCode 自行撰寫 `analysis-01.py`，透過 `excelpython_execute` 執行，並依工具結果生成側欄回答。三案不計入正式驗收。E010 的 AppContainer、ACL、WFP、65536 context 與正式案例判準照舊。歷史嘗試及各案紀錄見 [Draft PR #2](https://github.com/dawning-data-app/ollama-windows-poc/pull/2) 與 [E010](../../../experiments/E010/README.md)。
+
+使用原生 Windows PowerShell、既有 POC worktree、CPython 3.12.12／openpyxl 3.1.5、VS Code 1.133.0、OpenChamber 1.24.2、OpenCode 1.19.5 與 Ollama 0.31.1。各 runner 以獨立的 loopback 程序，從已準備的 `qwen3.5:9b-q4_K_M` model store 建立供本輪使用的文字模型。預載及結案均核對實際 8192 context 與 manifest digest `2c0b40d01b97bad9eb56ff380478a61fbd80ed626229b223cb362b8ecf558e60`。runner 設定 `use_mmap=true`、`LLAMA_ARG_REPACK=0` 與 `num_batch=256`。
+
+| 案例 | 實測結果 | 證據 ZIP（執行主機） |
+| --- | --- | --- |
+| 正常 | 實際讀取合成 `sales.xlsx`，Python stdout 與側欄 JSON 均符合 oracle。 | `D:\codex\openchamber-generated-python-mapped-1794473316987-evidence.zip`<br>SHA-256 `2e92a6424808b5f7b4207dee6b2da14eb27776bf6209cd86a355339e3d0d0e38`<br>Session `ses_e310a636fffes6F06fdBZoDA2v` |
+| missing | 對 `銷售 資料` 執行 `os.scandir`，取得 `FileNotFoundError`（WinError 3、errno 2）。側欄以繁中顯示原始路徑及目錄不存在。 | `D:\codex\openchamber-missing-utf8-1794535373743-evidence.zip`<br>SHA-256 `81b4eb5576a6643fde6e0e9e8c0c75f9854ee02e1f42e649c1f3151e5ac0de0c`<br>Session `ses_e2d58ac67ffeSAX09H7Ypwdqn5` |
+| corrupt | 對 `銷售 資料\sales.xlsx` 執行 `openpyxl.load_workbook`，取得 `BadZipFile`。側欄以繁中顯示原始路徑及檔案格式錯誤。 | `D:\codex\openchamber-generated-errors-1794477825404-evidence.zip`<br>SHA-256 `13701d2b7bf842f3365f6161fd64cde6522a344bc72f3b885c4cf5e489c08eb6`<br>Session `ses_e30b3deaeffeSH4KT5hBW0oGP1` |
+
+corrupt 的合成 `.xlsx` 刻意使用純文字內容，預期會觸發 `BadZipFile`。missing 與 corrupt 的 ZIP 根目錄都包含修正後的 UTF-8 MCP。corrupt ZIP 同時保留先前 missing 的失敗證據。
+
+1. 每次選一案，將上表的 ZIP 路徑和 SHA-256 填入下列命令。確認 ZIP 後解壓，並建立該次專用的空白證據目錄。
+
+   ```powershell
+   $Zip = '<本案的 ZIP 完整路徑>'
+   $ExpectedSha256 = '<本案的 SHA-256>'
+   if ((Get-FileHash -Algorithm SHA256 -LiteralPath $Zip -ErrorAction Stop).Hash -ne $ExpectedSha256) {
+       throw 'Evidence ZIP SHA-256 mismatch'
+   }
+   $Root = Join-Path 'D:\codex' ('openchamber-recheck-' + [guid]::NewGuid().ToString('N'))
+   $Bundle = Join-Path $Root 'bundle'
+   $Evidence = Join-Path $Root 'evidence'
+   New-Item -ItemType Directory -Path $Root -ErrorAction Stop | Out-Null
+   New-Item -ItemType Directory -Path $Evidence -ErrorAction Stop | Out-Null
+   Expand-Archive -LiteralPath $Zip -DestinationPath $Bundle -ErrorAction Stop
+   $Py = 'D:\code\python\ollama-windows-poc-local\tools\locked-evaluator\Scripts\python.exe'
+   ```
+
+2. 使用解壓根目錄的 runner 與同目錄的 `excel_python_mcp.py`。執行本案的一條命令。
+
+   ```powershell
+   # 正常
+   & $Py -I -B -u (Join-Path $Bundle 'smoke-openchamber-generated.py') $Evidence
+   # missing
+   & $Py -I -B -u (Join-Path $Bundle 'smoke-openchamber-generated-errors.py') missing $Evidence
+   # corrupt
+   & $Py -I -B -u (Join-Path $Bundle 'smoke-openchamber-generated-errors.py') corrupt $Evidence
+   ```
+
+3. 依新收證目錄 `$Evidence` 下的 `ready.json` 找到 VS Code 視窗、模型和提示。若 VS Code 詢問 Workspace Trust，只信任該次暫存的合成資料工作區。從 OpenChamber 側欄建立新 session，貼上原樣提示並按一次 **Send**。記下畫面中的工具與最終回答。
+
+4. 用 `$Evidence` 下的 `session-messages.json`、`analysis-01.py`、`python-attempt-01.json` 和 `verified-answer.json` 核對單筆送出、生成原始碼、實際執行及側欄回答。正常案比對 oracle，異常案核對原始路徑與實際例外。用 `preload.json` 與 `verified-answer.json` 確認 context，等 runner 收尾後檢查 `stops.jsonl` 再重跑下一案。
+
 ## 九欄位契約
 
 | 欄位 | 本輪範圍 |
