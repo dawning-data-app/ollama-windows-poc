@@ -23,7 +23,7 @@
 
 ## 為什麼
 
-`ide.py` 的 E004 launcher、環境與隔離規則由 macOS sandbox-exec 實作。Windows 候選使用 AppContainer 限制檔案與子程序的 token，使用 Windows 網路政策限定 TCP 路由，使用 Job Object 管理本次程序生命週期。原生程序測試只能回答 Job 與引號等局部行為。固定擴充套件的原始碼顯示官方 TUI 會隨機指定高位埠並從 VS Code 呼叫 loopback API，網路測試需涵蓋此入口與 OpenChamber 外部 API。
+`ide.py` 的 E004 launcher、環境與隔離規則由 macOS sandbox-exec 實作。Windows 候選使用 AppContainer 限制檔案與子程序的 token，使用 Windows 網路政策限定 TCP 路由，使用 Job Object 管理本次程序生命週期。原生程序測試只能回答 Job 與引號等局部行為。已安裝的官方 VSIX 以裸 `opencode` 啟動 TUI 的程序內 API。網路測試須查驗實際入口使用的路由，以及 OpenChamber 的外部 API。
 
 ## 成功與失敗判準
 

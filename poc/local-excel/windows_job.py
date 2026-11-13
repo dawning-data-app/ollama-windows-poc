@@ -172,6 +172,24 @@ def pid_creation_time(pid):
         close(handle)
 
 
+def is_live(identity):
+    handle = open_process(0x101000, False, identity["pid"])  # SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION
+    if not handle and ctypes.get_last_error() == 87:  # ERROR_INVALID_PARAMETER for an exited PID
+        return False
+    require(handle)
+    try:
+        if creation_time(handle) != identity["created_filetime"]:
+            return False
+        state = wait(handle, 0)
+        if state == 0:
+            return False
+        if state != WAIT_TIMEOUT:
+            raise ctypes.WinError(ctypes.get_last_error())
+        return True
+    finally:
+        close(handle)
+
+
 class ManagedProcess:
     def __init__(self, info, job):
         self.info = info

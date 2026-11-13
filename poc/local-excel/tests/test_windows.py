@@ -42,6 +42,83 @@ class WindowsTests(unittest.TestCase):
                 api.assert_not_called()
                 launch.assert_not_called()
 
+    def test_portless_official_cli_reaches_policy_check(self):
+        (self.run / "manifest.json").write_text(
+            json.dumps({"windows": True, "interface": "official"}), encoding="utf-8",
+        )
+        with (patch.object(sys, "argv", ["windows_poc.py", "official", str(self.run)]),
+              patch.dict(os.environ, {"OPENCODE_CALLER": "vscode"}, clear=True),
+              patch("pathlib.Path.cwd", return_value=self.workspace),
+              patch("sys.stderr") as stderr, patch("windows_poc.run_backend") as backend):
+            self.assertEqual(windows_poc.main(), 2)
+        self.assertIn("approved AppContainer", stderr.write.call_args_list[0].args[0])
+        backend.assert_not_called()
+
+    def test_official_port_must_match_extension(self):
+        port = 40000
+        with (patch("pathlib.Path.cwd", return_value=self.workspace),
+              patch.dict(os.environ, {"_EXTENSION_OPENCODE_PORT": str(port)}, clear=True),
+              patch("windows_poc.guarded_backend") as backend):
+            for invalid in (None, 40001, 1024):
+                with self.subTest(port=invalid), self.assertRaisesRegex(ValueError, "extension"):
+                    windows_poc.official(self.run, invalid)
+            backend.assert_not_called()
+            windows_poc.official(self.run, port)
+        args = ["--hostname", "127.0.0.1", "--port", str(port),
+                "--agent", "excel", "--model", f"ollama/{windows_poc.poc.MODEL}"]
+        backend.assert_called_once_with(self.run, "official", args, port=port)
+
+    def test_portless_official_backend_keeps_arguments_and_checks_caller(self):
+        with (patch("pathlib.Path.cwd", return_value=self.workspace),
+              patch.dict(os.environ, {}, clear=True),
+              patch("windows_poc.guarded_backend") as backend):
+            with self.assertRaisesRegex(ValueError, "extension"):
+                windows_poc.official(self.run)
+            backend.assert_not_called()
+            os.environ["OPENCODE_CALLER"] = "vscode"
+            windows_poc.official(self.run)
+        args = ["--agent", "excel", "--model", f"ollama/{windows_poc.poc.MODEL}"]
+        backend.assert_called_once_with(self.run, "official", args, port=None)
+
+    def test_portless_finish_and_export_check_process_identity(self):
+        with (windows_job.launch([sys.executable, "-I", "-c", "import time; time.sleep(30)"],
+                                 self.workspace, os.environ) as process,
+              patch("windows_poc.checked_run", return_value=(self.run, {"interface": "official"}, {})),
+              patch("windows_watchdog.listeners") as listeners,
+              patch("windows_poc.control_command") as control):
+            receipt = {"run": self.run.name, "port": None, **process.identity()}
+            mismatched = {**receipt, "created_filetime": receipt["created_filetime"] - 1}
+            path = self.evidence / "launch.json"
+            path.write_text(json.dumps(mismatched), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "active GUI backend"):
+                windows_poc.finish_gui(self.run)
+            self.assertFalse((self.evidence / "finish.request").exists())
+
+            path.write_text(json.dumps(receipt), encoding="utf-8")
+            windows_poc.finish_gui(self.run)
+            self.assertTrue((self.evidence / "finish.request").is_file())
+            with self.assertRaisesRegex(RuntimeError, "Stop the owned OpenCode"):
+                windows_poc.export_session(self.run, ["session", "list"])
+            control.assert_not_called()
+
+            process.stop(0)
+            self.assertEqual(process.poll(3000), 0)
+            self.assertIs(windows_poc.export_session(self.run, ["session", "list"]), control.return_value)
+            listeners.assert_not_called()
+
+    def test_backend_lease_creates_shared_directory_and_stays_exclusive(self):
+        root = self.run / "poc-local"
+        model_store = root / "models"
+        model_store.mkdir(parents=True)
+        lease = root / "evidence/active-opencode.json"
+        with patch("windows_poc.model.store", return_value=model_store):
+            with windows_poc.backend_lease(self.run, {}):
+                self.assertEqual(json.loads(lease.read_text(encoding="utf-8"))["run"], self.run.name)
+                with self.assertRaises(FileExistsError), windows_poc.backend_lease(self.run, {}):
+                    self.fail("A second backend acquired the lease")
+                self.assertTrue(lease.is_file())
+            self.assertFalse(lease.exists())
+
     def test_vscode_home_is_fresh_and_excludes_provider_keys(self):
         with patch.dict(os.environ, {"OPENAI_API_KEY": "fixture-only", "OPENCODE_CONFIG_CONTENT": "unexpected"}):
             env = windows_poc.gui_environment(self.run)

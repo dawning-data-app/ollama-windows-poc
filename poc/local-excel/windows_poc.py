@@ -145,9 +145,11 @@ def checked_run(run, interface=None):
 @contextmanager
 def backend_lease(run, manifest):
     lease = model.store(manifest).parent / "evidence/active-opencode.json"
-    with lease.open("x", encoding="utf-8") as handle:
-        json.dump({"run": run.name, "supervisor_pid": os.getpid()}, handle)
+    lease.parent.mkdir(exist_ok=True)
+    handle = lease.open("x", encoding="utf-8")
     try:
+        with handle:
+            json.dump({"run": run.name, "supervisor_pid": os.getpid()}, handle)
         yield
     finally:
         lease.unlink()
@@ -228,13 +230,20 @@ def run_cli(run, opencode, timeout):
     return manifest
 
 
-def official(run, port):
-    if not 16384 <= port <= 65535 or os.environ.get("_EXTENSION_OPENCODE_PORT") != str(port):
-        raise ValueError("Require the port issued by the pinned official VS Code extension")
+def official(run, port=None):
     if Path.cwd().resolve() != (run / "workspace").resolve():
         raise ValueError("Official extension started in the wrong workspace")
-    return guarded_backend(run, "official", ["--hostname", "127.0.0.1", "--port", str(port),
-                           "--agent", "excel", "--model", f"ollama/{poc.MODEL}"], port=port)
+    extension_port = os.environ.get("_EXTENSION_OPENCODE_PORT")
+    args = ["--agent", "excel", "--model", f"ollama/{poc.MODEL}"]
+    if port is None:
+        # The pinned VSIX sends bare opencode and uses the TUI's in-process API.
+        if os.environ.get("OPENCODE_CALLER") != "vscode" or extension_port:
+            raise ValueError("Require the pinned VS Code extension to start the portless TUI")
+    else:
+        if not 16384 <= port <= 65535 or extension_port != str(port):
+            raise ValueError("Require the port issued by the pinned official VS Code extension")
+        args = ["--hostname", "127.0.0.1", "--port", str(port), *args]
+    return guarded_backend(run, "official", args, port=port)
 
 
 def serve(run):
@@ -323,11 +332,12 @@ def finish_gui(run):
     run, manifest, _ = checked_run(run)
     if manifest["interface"] not in PROFILES:
         raise ValueError("Only a completed GUI case can request a graceful finish")
-    receipt = poc.read_json(run / "evidence/launch.json")
+    receipt = poc.read_json(boundary.safe_path(run, run / "evidence/launch.json"))
     port, pid = receipt["port"], receipt["pid"]
     if (receipt["run"] != run.name
-            or watchdog.listeners(port) != [{"address": "127.0.0.1", "pid": pid}]
-            or job.pid_creation_time(pid) != receipt["created_filetime"]):
+            or (port is None and manifest["interface"] != "official")
+            or (port is not None and watchdog.listeners(port) != [{"address": "127.0.0.1", "pid": pid}])
+            or not job.is_live(receipt)):
         raise RuntimeError("No matching active GUI backend to finish")
     (run / "evidence/finish.request").touch(exist_ok=False)
 
@@ -346,8 +356,9 @@ def export_session(run, args):
     run, manifest, policy = checked_run(run)
     launch = run / "evidence/launch.json"
     if launch.is_file():
-        port = poc.read_json(launch).get("port")
-        if port and watchdog.listeners(port):
+        receipt = poc.read_json(boundary.safe_path(run, launch))
+        port = receipt["port"]
+        if job.is_live(receipt) or (port is not None and watchdog.listeners(port)):
             raise RuntimeError("Stop the owned OpenCode backend before exporting its session")
     return control_command(run, manifest, policy, args, 30)
 
@@ -385,7 +396,7 @@ def main():
         command = sub.add_parser(name)
         command.add_argument("run", type=Path)
         if name == "official":
-            command.add_argument("--port", required=True, type=int)
+            command.add_argument("--port", type=int)
         if name == "boundary-probe":
             command.add_argument("--external-ip", required=True)
             command.add_argument("--external-port", required=True, type=int)

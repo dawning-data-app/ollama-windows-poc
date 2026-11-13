@@ -28,7 +28,7 @@ AppContainer 診斷及原始證據索引見 [E010 結案紀錄](../../../experim
 由公司核准的管理工具或 IT 提供本案政策，範圍如下。
 
 - 以 run 的 AppContainer SID 授權精確目錄的讀取／執行及寫入；控制 checkout、evaluator／oracle、其他 runs、證據與模型 store 均在代理邊界之外。backend 和其子程序用同一受限 token。以 Job Object 管理擁有的程序樹。
-- Windows Filtering Platform 規則須讓該 AppContainer 的 outbound 只到 `127.0.0.1:21434/TCP`，拒絕其他 IPv4／IPv6、DNS、LAN 及 Internet 路由。對 `opencode.exe` 允許受控 loopback listener。官方 1.0.0 會從 16384–65535 選取 TUI 埠，側欄固定 21435。測試期間專用 Ollama 程序亦須封鎖外部 outbound，避免工具經由本機模型 API 取得額外網路能力。 [官方擴充套件固定版原始碼](https://github.com/anomalyco/opencode/blob/v1.19.5/sdks/vscode/src/extension.ts)
+- Windows Filtering Platform 規則須讓該 AppContainer 的 outbound 只到 `127.0.0.1:21434/TCP`，拒絕其他 IPv4／IPv6、DNS、LAN 及 Internet 路由。官方 1.0.0 的 VSIX 送出裸 `opencode`，使用 TUI 程序內 API。擴充套件若傳入埠，launcher 會核對該埠與擴充套件環境值相符且位於 16384–65535，並使用受控的 loopback listener。側欄固定使用 21435。測試期間專用 Ollama 程序亦須封鎖外部 outbound，避免工具經由本機模型 API 取得額外網路能力。
 - 在 evaluator 端提供 `provisioned-policy.json`，含 `kind`、`run`、`container`、`request_sha256`、`sid`、`wfp_filter_ids` 及 `ollama_wfp_filter_ids`。兩組數字 ID 分別對應該 run 和專用 Ollama 的生效規則，控制帳號需能唯讀查驗。另提供公司核准、可由控制端 TCP 連線的外部測試 IP 與埠作正對照。探測僅建立 TCP 連線，不送資料。收據存在、規則活躍與 sentinel 探測都需成立。
 - 需要新增 profile、ACL 或 WFP 規則時，先由使用者與公司管理方決定，範圍只含 POC SID、專用路徑與 listener。先核對停止本輪 Job 和專用埠，再撤除本輪政策、ACL 與 profile。避開全機 loopback exemption 或公司全域政策變更。 [WFP 存取控制](https://learn.microsoft.com/en-us/windows/win32/fwp/access-control)
 
