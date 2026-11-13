@@ -16,7 +16,7 @@ class WorkflowEvidenceTests(unittest.TestCase):
         self.run = Path(self.tmp.name)
         (self.run/'workspace').mkdir()
         self.target = str(self.run/'workspace/銷售 資料')
-        self.inspection = {'path':self.target, 'file':self.target+'/sales.xlsx', 'sheet':'Sales',
+        self.inspection = {'path':self.target, 'file':str(Path(self.target) / 'sales.xlsx'), 'sheet':'Sales',
             'headers':['date','region','product','quantity','unit_price'],
             'types':{'date':'datetime','region':'str','product':'str','quantity':'int','unit_price':'int'},
             'region_values':['East','West'], 'product_values':['a','b']}

@@ -31,10 +31,11 @@ class FixtureAndSessionTests(unittest.TestCase):
             self.assertNotEqual(first, second)
             names = {p.name for p in (first / "workspace").iterdir()}
             self.assertEqual(names, {".python-version", "pyproject.toml", "uv.lock", "opencode.json", "prompt.txt", "銷售 資料"})
-            self.assertNotIn("12000", (first / "workspace" / "prompt.txt").read_text())
+            self.assertNotIn("12000", (first / "workspace" / "prompt.txt").read_text(encoding="utf-8"))
             self.assertEqual(poc.sha256(first / "workspace" / "uv.lock"), poc.sha256(poc.ROOT / "uv.lock"))
             poc.validate_config(poc.read_json(first / "workspace" / "opencode.json"), poc.MODEL)
 
+    @unittest.skipIf(os.name == "nt", "legacy .venv probe; Windows uses the run-scoped locked runtime")
     def test_real_uv_sync_then_isolated_offline_runtime(self):
         with tempfile.TemporaryDirectory() as folder:
             run = poc.prepare(Path(folder))

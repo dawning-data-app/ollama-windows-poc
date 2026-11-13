@@ -79,3 +79,11 @@ Mac 目標未達成；下一個待決策為一版更短流程、正常／missing
 ## E009 thinking 實驗停點
 
 在既有feature／branch完成已批准的唯一reasoningEffort變因實驗，source754f9fb／probe-review修正63ba9db。probe真實執行在10分鐘內完成；人工核對晚39秒已揭露，未重送，總截止06:49不補時。正常／missing／corrupt各一個fresh側欄樣本保留，候選未成立，不正式重驗。所有本次backend已停止，全域Ollama保留；詳見 [E009](thinking-verification.md)。持久證據 `local-excel-thinking-20261110`；原archive不覆蓋。原預設／CLI/TUI／模型digest／context／sampler／output／隔離與九欄位契約保持，不在dev實作。續作先唯讀核對feature／branch／Draft PR與交付head，下一步為human review／needs-rework決策，不自動加時／改模型或runtime契約、不合併、不進Windows。
+
+## 2026-11-12 原生 Windows 續作斷點
+
+來源為 `e4136937`。實作位於 `feat/andrew/local-excel-windows` 的獨立 Windows worktree。原生固定版 uv／CPython／openpyxl、Git Bash、三個入口的政策拒絕、Job watchdog 及既有回歸已取得證據。資源初測擋在 commit 餘裕，30 秒複測通過。
+
+官方 manifest、六個 blobs 及 Windows 重建的參數化 digest 已核對。專用 21434 Job 已停止，載入狀態未進推論。
+
+下一步是公司核准的 AppContainer／ACL／WFP 政策及正對照。正式 15 案、側欄三案、GUI 與模型推論皆未執行。重跑以新的有效時間窗口、fresh runs 與本次資源採樣為準。見 [E010](../../../experiments/E010/README.md) 及 [Windows 教程](windows.md)。
