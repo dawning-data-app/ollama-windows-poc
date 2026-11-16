@@ -78,6 +78,33 @@ curl --noproxy '*' -fsSN --connect-timeout 5 --max-time 120 -w '\nHTTP %{http_co
 2. 將啟動程序的 `OLLAMA_HOST` 恢復為 `127.0.0.1:11434`，保留 `OLLAMA_NO_CLOUD=1`，重新執行 `ollama serve`。實測只剩回送位址監聽，本機 Qwen 再測 HTTP 200 並回覆「四十二」。
 3. 從剛才獲准的 Mac 重跑上述三條命令。三筆均在約 5 秒後連線逾時，curl 回傳 `28` 並顯示 `HTTP 000`，表示未收到 HTTP 回應。已確認還原後原獲准的 Mac 無法連上內網端點。
 
+## Mac → 公司 VPN → Windows Qwen POC
+
+2026-11-16（台北時間）。Mac 使用 Android 行動網路熱點，並由 Mac 連公司 VPN，呼叫 Windows 的 `http://<WINDOWS_IP>:11434`。驗收模型為 `qwen3.5:9b`。以下 `<VPN_SOURCE_IP>` 指 Windows 實際看到的單一 VPN 來源 IPv4，`<WIFI_SUBNET_CIDR>` 指 Windows 目前 Wi-Fi 的 IPv4 子網，本次前綴為 `/23`。
+
+### VPN 診斷與驗收
+
+1. 初測 TCP `11434` 逾時。後續 Windows 封包擷取在 Wi-Fi 網卡看到從 `<VPN_SOURCE_IP>` 到 `<WINDOWS_IP>:11434` 的 TCP SYN，該次擷取未見 SYN-ACK。當時生效的 Wi-Fi 子網放行規則未涵蓋此來源。
+2. 保留原有 Wi-Fi 規則，暫時只放行 `<VPN_SOURCE_IP>` 到 `<WINDOWS_IP>:11434`。保持同一熱點及公司 VPN，從 Mac 重跑模型清單與非串流聊天。Windows Ollama 日誌確認兩筆請求皆來自該來源。
+
+| 時間 | 請求 | 實測結果 |
+| --- | --- | --- |
+| 15:33:50 | `GET /api/tags` | HTTP 200，模型清單包含 `qwen3.5:9b` |
+| 15:34:00 | 非串流 `POST /api/chat` | HTTP 200，`model=qwen3.5:9b`，回覆 `42`，`done=true` |
+
+**公司 VPN 經行動網路呼叫 Qwen 的非串流驗收通過。** 驗收後撤銷臨時規則，確認它已從 `ActiveStore` 與 `PersistentStore` 移除，原 Wi-Fi 規則繼續生效。
+
+### 長期放行範圍
+
+| 規則 | 允許來源 |
+| --- | --- |
+| `Ollama-Qwen-LAN-POC` | Windows 目前 Wi-Fi 子網 `<WIFI_SUBNET_CIDR>` |
+| `Ollama-Qwen-VPN-POC` | 實測的單一公司 VPN 來源 `<VPN_SOURCE_IP>` |
+
+兩條規則均限定 `Public` 防火牆設定檔、`Wi-Fi` 介面、`ollama.exe`、目的位址 `<WINDOWS_IP>` 及入站 TCP `11434`，並已在 `ActiveStore` 與 `PersistentStore` 確認。長期 VPN 規則生效後，Windows 日誌於 15:39:08 與 15:39:16 分別再次記錄同一來源的 `GET /api/tags` 和 `POST /api/chat` 回 HTTP 200。
+
+Windows 防火牆依來源 IP 比對。長期 VPN 規則的範圍是本次實測的單一位址。若公司 VPN 改用其他來源位址，需重新確認 Windows 所見的來源，再調整規則。
+
 ## Human check
 
 repo 已由使用者移至 GitHub Public。後續推送前，檢查跨機實測結果、重現步驟及 Git diff，確認沒有 Windows 的實際私人 IP 或其他私密資料。
