@@ -87,3 +87,11 @@ Mac 目標未達成；下一個待決策為一版更短流程、正常／missing
 官方 manifest、六個 blobs 及 Windows 重建的參數化 digest 已核對。專用 21434 Job 已停止，載入狀態未進推論。
 
 下一步是公司核准的 AppContainer／ACL／WFP 政策及正對照。正式 15 案、側欄三案、GUI 與模型推論皆未執行。重跑以新的有效時間窗口、fresh runs 與本次資源採樣為準。見 [E010](../../../experiments/E010/README.md) 及 [Windows 教程](windows.md)。
+
+## 2026-11-16 review 修正交接
+
+PR #1 的兩個 P2 已修正：5edb526 保留 malformed evidence 的失敗報告；deb9604 拒絕 npm runtime root 包含 evaluator repo。修正前在 e413693 重現錯誤；修正後原 Mac 集合 50/50、舊 CLI 10/10，三項真實 OS 測試無 skip。沒有新 LLM／GUI E2E，Mac 未通過的歷史仍保留。
+
+推送前發現 Andrew 已把 PR #2 以 merge commit b9a4557 合入本 feature 分支（Windows tip 14b2590）；main 尚未合併，#2 已關閉。已保留全部 Windows 提交，僅重接本機尚未推送的兩個 fix 及文件；checkpoint 的 Windows 歷史段落也完整保留。整合後 Mac 測試集合 65 項中 50 通過、15 項 native Windows 測試按平台跳過，舊 CLI 10/10 通過；不冒稱已在 Windows 重驗。
+
+修正只在既有 feature worktree／feat/andrew/local-excel-poc，dev 未改。#1 現已包含 Windows 增量，不能再視為純共用基礎；合 main 前需人審及使用者確認最新合併範圍。本輪只修 review、push／回覆及 resolve，不合 main，也不修改／rebase／retarget 原 Windows 分支。

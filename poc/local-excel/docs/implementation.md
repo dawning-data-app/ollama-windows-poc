@@ -83,3 +83,11 @@ TC-01正常身份／65536／主輔本機stream／hashes相符，missing僅setup�
 Goal、Non-Goal、In-Scope、Out-Of-Scope、ReadOnly、Written、Modify、Deleted、TestCase 九欄位保留。使用者例外僅新增thinking opt-in的reasoningEffort none→medium，無具名level保證。Written增加thinking.py、test_thinking.py、E009與驗證紀錄；Modify限ide.py互斥prepare／capture、教程／紀錄；ReadOnly保留poc.py、isolation.py、aligned.py、shortflow.py、workflow.py、fixture／oracle／uv.lock與tinyllama資產，Deleted無。
 
 TC-01／07：所有首次樣本核對固定主輔本機route／digest／65536與hash／原policy，config新802cb27b…並保留original／aligned hash，不冒稱config沒改。TC-02：官方TUI本候選未驗。TC-03：probe與三例真實側欄送出，GUI工具／最後或中止狀態按實際列E009，未完成者不補成pass。TC-04：正常未完成，負面依raw判失敗／缺口，正式十例未執行。TC-05：46/46 helper回歸、原Archify再驗9/9與原視覺檢查、Graphify不建圖、本機bounded diff PR Lens；均不等於E2E。TC-06：Mac未驗收、Windows未開始，Draft交human review／needs-rework，不合併。見 [thinking紀錄](thinking-verification.md)。
+
+## 2026-11-16 PR #1 review 修正
+
+Goal、Non-Goal、In-Scope、Out-Of-Scope、ReadOnly、Written、Modify、Deleted、TestCase 九欄位保留。本次使用者明確授權 review-and-fix；Modify 的窄幅例外為 workflow.py 的 JSON mapping 驗證與 isolation.py 的 npm root／repo 重疊拒絕，另更新對應回歸與教程／交接。Written 為新增回歸；Deleted 無。poc.py、合成 Excel、oracle、uv.lock、模型 digest／65536／推論路由／sampler、原輸入指令與 tinyllama 資產仍 ReadOnly，沒有擴大隔離權限。
+
+TC-05：malformed JSON／inspection mapping 會保存 not-passed capture report；TC-07：npm root 為 repo 祖先、相同或子層皆拒絕，獨立 sibling 仍可用。舊碼回歸先重現失敗，修正後、整合 Windows merge 前為 50/50 POC（含三項真實 Mac OS 測試、無 skip）與舊 CLI 10/10 通過。暫存 npm tree 曾遺失而跳過 OS 測試，從本機快取恢復相同 opencode-ai@1.19.5 後已重跑；沒有升級或新模型推論。TC-04／06 的 Mac 完整驗收失敗／未執行及 Windows 正式驗收界線不改。
+
+並行更新：Andrew 以 b9a4557 合入 Windows PR #2 後，本輪只將未推送修正接到該 merge 之上。相對 b9a4557，模型／輸入與 Windows 實作均不變。整合後在 Mac 共發現 65 項 POC 測試：50 通過、15 項 native Windows 依平台跳過，舊 CLI 10/10 通過。#1 已含 Windows 增量，最新交付範圍仍須人審及使用者確認後才可合 main；不改判 Mac／Windows 正式驗收。

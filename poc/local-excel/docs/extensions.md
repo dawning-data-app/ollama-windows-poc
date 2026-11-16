@@ -130,3 +130,7 @@ uv run --locked python ide.py prepare --interface chamber --case missing \
 接著按本頁側欄的 server／launch 步驟，從 GUI 貼入這次 `workspace/prompt.txt`，只送一次。代理必須自主寫／執行 runtime_probe.py，印真實 sys.executable／sys.prefix；人工看工具與最後繁中回答，再 capture 原 session。探測 reviewer 接受本次 venv 的 python／python3／python3.12 與純 JSON；Excel 的原嚴格 JSON 區塊／數值／排名契約未放寬。探測不供應程式、不讀工作簿，也不代表 Excel 成功。
 
 只有工具鏈前提成立，才另 prepare `--thinking-workflow --case sales`／`missing`／`corrupt`，各一次 fresh session，沿用原 aligned Excel 需求，不回餵探測輸出、舊答案或程式。一次只開一個本次 backend／視窗；這輪授權先10分鐘、成立後三例最多40分鐘、總50，每例600秒且總截止優先，沒有自動重試或正式十例。實際結果與時序限制見 [thinking 驗證](thinking-verification.md) 與 [E009](../../../experiments/E009/README.md)。所有後續重驗仍依已核准範圍及投入界線處理。
+
+## 2026-11-16 runtime 路徑檢查
+
+OpenCode 的 npm runtime tree 必須與 evaluator repo 分離：根目錄不得等於 repo、位於 repo 內，或是包含 repo 的祖先目錄。例如把 node_modules 裝在 repo 的父層，會因其遞迴可讀範圍包含 oracle 而拒絕啟動。獨立 sibling 或本教程的暫存安裝目錄仍可用；合法既有 profile、模型與網路規則不變。這是 PR #1 review 修正，不代表新的 Mac E2E 已通過。
