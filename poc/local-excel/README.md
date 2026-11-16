@@ -116,57 +116,7 @@ uv run --locked python poc.py check "$Run"
 
 ## 5. Windows 原生重現
 
-**Mac 完整驗收前不執行 Windows E2E。** 先在 Windows 安裝 VS Code、Git、Ollama、Node.js 與 uv，確認 GPU／RAM／磁碟，取得同一 feature 分支。在 VS Code 的 PowerShell：
-
-```powershell
-Set-Location <feature-worktree>\poc\local-excel
-uv sync --locked
-$ToolRoot = Join-Path $env:TEMP 'local-excel-poc\opencode'
-npm install --prefix $ToolRoot opencode-ai@1.19.5 --no-audit --no-fund
-$OpenCode = Join-Path $ToolRoot 'node_modules\.bin\opencode.cmd'
-ollama pull qwen3.5:9b
-# 完全結束原 Ollama 後，於另一個 PowerShell 啟動：
-$env:OLLAMA_HOST = '127.0.0.1:11434'
-$env:OLLAMA_CONTEXT_LENGTH = '65536'
-$env:OLLAMA_NO_CLOUD = '1'
-ollama serve
-```
-
-回到原 PowerShell，確認模型 digest 與 Mac 相同；若 Mac 使用了本機 Modelfile 參數，Windows 同樣建置後再比對：
-
-```powershell
-$ModelFile = Join-Path $env:TEMP 'local-excel-poc\Modelfile'
-ollama stop qwen3.5:9b
-@'
-FROM qwen3.5:9b
-PARAMETER num_ctx 65536
-PARAMETER temperature 0.6
-PARAMETER top_p 0.95
-PARAMETER top_k 20
-PARAMETER min_p 0
-PARAMETER presence_penalty 0
-PARAMETER repeat_penalty 1
-'@ | Set-Content -Encoding ascii $ModelFile
-ollama create qwen3.5:9b -f $ModelFile
-ollama list
-```
-
-不要悄悄改模型或硬體配置後稱為同配置重現。
-
-```powershell
-$RunRoot = Join-Path $env:TEMP 'local-excel-poc\runs'
-uv run --locked python poc.py preflight --output (Join-Path $RunRoot 'qualification.json')
-$Run = uv run --locked python poc.py prepare --runs-root $RunRoot
-Get-Content -Raw -Encoding utf8 (Join-Path $Run 'workspace\prompt.txt')
-# 先複製完整提示；進入 TUI 後貼上並送出
-uv run --locked python poc.py tui $Run --opencode $OpenCode
-# CLI 三次驗證，每次重新 prepare：
-$Run = uv run --locked python poc.py prepare --runs-root $RunRoot
-uv run --locked python poc.py run $Run --opencode $OpenCode
-uv run --locked python poc.py check $Run
-```
-
-Windows shell、CLI 與 GPU 的實際相容性必須在該機驗證；本 repo 的單元測試不代表 Windows E2E 已通過。
+使用 [原生 Windows 工具鏈、隔離與驗收](docs/windows.md) 中的專用 Windows adapter、21434 與固定版工具。驗證狀態見 [E010](../../experiments/E010/README.md)。
 
 ## 排查與測試
 

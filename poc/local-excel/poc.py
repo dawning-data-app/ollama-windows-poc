@@ -28,7 +28,7 @@ REPO_ROOT = ROOT.parents[1]
 CANDIDATE_MODELS = ("qwen3.5:4b-q4_K_M", "qwen3.5:9b")
 MODEL = "qwen3.5:9b"  # Selected after the Mac CLI reproduction checks.
 CONTEXT = 65536
-BASE_URL = "http://localhost:11434"
+BASE_URL = "http://127.0.0.1:21434" if os.name == "nt" else "http://localhost:11434"
 
 
 def write_json(path: Path, value: object) -> None:
@@ -234,6 +234,9 @@ def command(argv: list[str], run: Path, name: str, timeout: float, env: dict | N
 
 
 def run_agent(run: Path, opencode: str, timeout: float) -> dict:
+    if os.name == "nt":
+        import windows_poc
+        return windows_poc.run_cli(run, opencode, timeout)
     run = run.resolve()
     manifest = read_json(run / "manifest.json")
     if manifest["status"] != "prepared":
@@ -278,6 +281,10 @@ def interactive(run: Path, opencode: str) -> dict:
 
     TUI runs are manual evidence; CLI event verification is deliberately separate.
     """
+    if os.name == "nt":
+        import windows_poc
+        windows_poc.launch_gui(run)
+        return {"status": "interactive-needs-review"}
     run = run.resolve()
     manifest = read_json(run / "manifest.json")
     if manifest["status"] != "prepared":
@@ -318,6 +325,10 @@ def check(run: Path) -> dict:
     manifest = read_json(run / "manifest.json")
     workspace = run / "workspace"
     errors = []
+    windows = manifest.get("windows", False)
+    if windows:
+        import windows_poc
+        windows_poc.verify_review_paths(run, manifest)
     if manifest["status"] != "recorded":
         errors.append("agent run did not finish successfully")
     for filename, field in (("uv.lock", "lock_sha256"), ("opencode.json", "config_sha256")):
@@ -338,12 +349,13 @@ def check(run: Path) -> dict:
                   and "analysis.py" in p.get("state", {}).get("input", {}).get("command", "")
                   and (manifest["case"] != "sales" or p.get("state", {}).get("metadata", {}).get("exit") == 0)]
     runtime_file = run / "evidence" / "python-runtime.stdout"
-    if not runtime_file.is_file() or str(workspace / ".venv") not in runtime_file.read_text(encoding="utf-8"):
+    python_root = run / "runtime" if windows else workspace / ".venv"
+    if not runtime_file.is_file() or str(python_root) not in runtime_file.read_text(encoding="utf-8"):
         errors.append("session uv Python interpreter not confirmed")
     commands = [p.get("state", {}).get("input", {}).get("command", "") for p in tools if p.get("tool") == "bash"]
     if any("python3 " in value for value in commands):
         lines = runtime_file.read_text(encoding="utf-8").splitlines() if runtime_file.is_file() else []
-        if len(lines) < 2 or str(workspace / ".venv") not in lines[1]:
+        if len(lines) < 2 or str(python_root) not in lines[1]:
             errors.append("python3 alias is not confirmed inside the session uv environment")
     text = "\n".join(e.get("part", {}).get("text", "") for e in events if e.get("type") == "text")
     if manifest["case"] == "sales":
@@ -372,7 +384,7 @@ def check(run: Path) -> dict:
     try:
         loaded = read_json(run / "evidence" / "loaded-after.json")["models"]
         if not any(m["name"] == manifest["model"] and m.get("digest") == manifest.get("digest")
-                   and m.get("context_length", 0) >= CONTEXT for m in loaded):
+                   and (m.get("context_length") == CONTEXT if windows else m.get("context_length", 0) >= CONTEXT) for m in loaded):
             errors.append("post-run model digest/context not confirmed")
     except (OSError, ValueError, KeyError):
         errors.append("missing post-run model evidence")
@@ -420,6 +432,8 @@ def main() -> int:
             print(prepare(args.runs_root, args.case, args.model))
             return 0
         if args.action == "preflight":
+            if os.name == "nt":
+                raise RuntimeError("Windows model preflight requires the run-scoped OS boundary and resource admission")
             result = preflight(args.model)
             write_json(args.output, result)
         elif args.action == "run":
@@ -430,7 +444,7 @@ def main() -> int:
             result = check(args.run_dir)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result.get("status") in ("qualified", "recorded", "needs-review", "interactive-needs-review") else 2
-    except (OSError, ValueError, KeyError) as exc:
+    except (OSError, ValueError, KeyError, RuntimeError) as exc:
         print(f"POC_ERROR: {exc}", file=sys.stderr)
         return 2
 

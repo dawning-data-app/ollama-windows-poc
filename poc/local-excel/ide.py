@@ -26,6 +26,8 @@ PROBE = 'POC_CONTEXT_ONLY: synthetic Excel environment; no analysis or expected 
 
 
 def prepare(interface: str, case: str, runs_root: Path, binary: str, probe: bool = False, evidence_workflow: bool = False, short_workflow: bool = False, aligned_workflow: bool = False, thinking_workflow: bool = False, thinking_probe: bool = False) -> Path:
+    if os.name == 'nt':
+        raise RuntimeError('Prepare a Windows run with windows_poc.py prepare')
     if sum((probe, evidence_workflow, short_workflow, aligned_workflow, thinking_workflow, thinking_probe)) > 1:
         raise ValueError("probe and experimental protocols are mutually exclusive")
     binary = str(Path(binary).resolve())
@@ -212,25 +214,37 @@ def ran_analysis_python(part: dict) -> bool:
 def capture(run: Path, session_id: str | None) -> dict:
     manifest = poc.read_json(run / 'manifest.json')
     binary = manifest['binary']
-    env = poc.environment(run)
+    argv = ['session', 'list', '--format', 'json'] if session_id is None else ['export', session_id]
+    windows = manifest.get('windows', False)
+    if windows:
+        import windows_poc
+        windows_poc.verify_review_paths(run, manifest)
+        data = windows_poc.export_session(run, argv)
+    else:
+        result = subprocess.run([binary, *argv], cwd=run / 'workspace', env=poc.environment(run),
+                                capture_output=True, text=True, check=True)
+        data = json.loads(result.stdout)
     if session_id is None:
-        result = subprocess.run([binary, 'session', 'list', '--format', 'json'], cwd=run / 'workspace',
-                                env=env, capture_output=True, text=True, check=True)
-        poc.write_json(run / 'evidence/session-list.json', json.loads(result.stdout))
-        return {'sessions': json.loads(result.stdout)}
-    result = subprocess.run([binary, 'export', session_id], cwd=run / 'workspace', env=env,
-                            capture_output=True, text=True, check=True)
-    data = json.loads(result.stdout)
+        poc.write_json(run / 'evidence/session-list.json', data)
+        return {'sessions': data}
     poc.write_json(run / 'evidence/session-export.json', data)
-    loaded = poc.api('/api/ps')
-    poc.write_json(run / 'evidence/loaded-after.json', loaded)
+    loaded_path = run / 'evidence/loaded-after.json'
+    if windows:
+        loaded = poc.read_json(loaded_path) if loaded_path.is_file() else {'models': []}
+    else:
+        loaded = poc.api('/api/ps')
+        poc.write_json(loaded_path, loaded)
     errors = []
-    if manifest.get('isolation'):
+    if windows or manifest.get('isolation'):
         try:
-            boundary = isolation.require(run)
-            if manifest['interface'] == 'official':
+            if windows:
+                boundary = windows_poc.boundary.require(run, manifest)
+                receipts = [poc.read_json(run / 'evidence/launch.json')]
+            elif manifest['interface'] == 'official':
+                boundary = isolation.require(run)
                 receipts = [json.loads(line) for line in (run / 'evidence/extension-launch.jsonl').read_text().splitlines()]
             else:
+                boundary = isolation.require(run)
                 receipts = [poc.read_json(run / 'server.json')]
             if not receipts or any(r.get('isolation') != boundary or r.get('cwd') != str(run / 'workspace') for r in receipts):
                 errors.append('execution boundary receipt differs from prepared session')
@@ -276,9 +290,9 @@ def capture(run: Path, session_id: str | None) -> dict:
             errors.append('missing negative discovery or explanation')
         if manifest['case'] == 'missing' and fixture.parent.exists():
             errors.append('agent created missing input folder')
+    if (windows or manifest.get('protocol')) and poc.sha256(workspace / 'prompt.txt') != manifest['prompt_sha256']:
+        errors.append('protected input changed: prompt.txt')
     if manifest.get('protocol'):
-        if poc.sha256(workspace / 'prompt.txt') != manifest['prompt_sha256']:
-            errors.append('protected input changed: prompt.txt')
         if manifest['protocol'] == thinking.VERSION:
             errors.extend(thinking.review(run, manifest, tools, final))
         else:
@@ -287,7 +301,7 @@ def capture(run: Path, session_id: str | None) -> dict:
     if not any(m['name'] == poc.MODEL and m['digest'] == DIGEST and m.get('context_length', 0) == poc.CONTEXT for m in loaded['models']):
         errors.append('loaded model digest/context not confirmed')
     inference_log = run / 'state/opencode/log/opencode.log'
-    log_text = inference_log.read_text() if inference_log.exists() else ''
+    log_text = inference_log.read_text(encoding='utf-8') if inference_log.exists() else ''
     (run / 'evidence/inference.log').write_text(log_text)
     streams = [line for line in log_text.splitlines() if 'message=stream' in line and session_id in line]
     if not all(any(f'small={size}' in line and f'modelID={poc.MODEL}' in line
