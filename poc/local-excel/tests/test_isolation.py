@@ -4,10 +4,44 @@ import platform
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 import isolation
 import poc
 
 BINARY = Path('/private/tmp/local-excel-poc/opencode/node_modules/.bin/opencode').resolve()
+
+
+class RuntimeRootTests(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name).resolve()
+        self.repo = self.root / 'project/repo'
+        self.run = self.root / 'runs/session'
+
+    def roots(self, tool_root):
+        original_resolve = Path.resolve
+        python = self.run / 'workspace/.venv/bin/python'
+
+        def resolve(path, *args, **kwargs):
+            if path == python:
+                return self.root / 'cpython-3.12.12-test/bin/python'
+            return original_resolve(path, *args, **kwargs)
+
+        # Model the pinned uv interpreter without executing or installing a runtime.
+        # Other paths still use real canonicalization; no symlink privilege required.
+        with patch.object(Path, 'resolve', resolve), patch.object(poc, 'REPO_ROOT', self.repo):
+            return isolation.runtime_roots(self.run, str(tool_root / 'node_modules/opencode-ai/bin/opencode'))
+
+    def test_npm_roots_overlapping_repository_are_rejected(self):
+        for tool_root in (self.repo.parent, self.repo, self.repo / 'tools'):
+            with self.subTest(tool_root=tool_root):
+                with self.assertRaisesRegex(ValueError, 'separate npm runtime tree'):
+                    self.roots(tool_root)
+
+    def test_separate_sibling_npm_root_remains_usable(self):
+        tool_root = self.repo.parent / 'runtime'
+        self.assertIn(str(tool_root), self.roots(tool_root))
 
 
 @unittest.skipUnless(platform.system() == 'Darwin' and BINARY.is_file(), 'requires qualified Mac runtime')

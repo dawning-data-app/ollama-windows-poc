@@ -28,7 +28,8 @@ def runtime_roots(run: Path, binary: str) -> list[str]:
         raise ValueError('unqualified Python runtime root')
     binary_path = Path(binary).resolve()
     tool_root = next((p.parent for p in binary_path.parents if p.name == 'node_modules'), None)
-    if tool_root is None or tool_root == poc.REPO_ROOT or poc.REPO_ROOT in tool_root.parents or run.is_relative_to(tool_root):
+    if (tool_root is None or tool_root.is_relative_to(poc.REPO_ROOT)
+            or poc.REPO_ROOT.is_relative_to(tool_root) or run.is_relative_to(tool_root)):
         raise ValueError('OpenCode must use a separate npm runtime tree')
     return ['/bin', '/sbin', '/usr/bin', '/usr/sbin', '/opt/homebrew', str(python_root), str(tool_root)]
 
