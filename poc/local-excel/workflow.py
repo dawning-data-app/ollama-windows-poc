@@ -89,6 +89,10 @@ def review(run: Path, manifest: dict, tools: list[dict], final: str) -> list[str
     try:
         inspection = json.loads((run / 'workspace/inspection.json').read_text())
         answer = json.loads((run / 'workspace/answer.json').read_text())
+        if (not isinstance(inspection, dict) or not isinstance(answer, dict)
+                or not isinstance(inspection.get('types'), dict)
+                or any(not isinstance(answer.get(key), dict) for key in ('monthly_sales', 'regional_sales'))):
+            raise ValueError('inspection and answer mappings have invalid shapes')
         if (inspection.get('path') != target or inspection.get('file') != str(Path(target) / 'sales.xlsx')
                 or inspection.get('sheet') != 'Sales' or set(inspection.get('headers', [])) != HEADERS
                 or set(inspection.get('types', {})) != HEADERS

@@ -46,6 +46,25 @@ class WorkflowEvidenceTests(unittest.TestCase):
         self.tools[0]=self.tool('explore_excel.py',self.inspection)
         self.assertTrue(any('reported types' in e for e in self.review()))
 
+    def test_malformed_mapping_evidence_is_rejected_without_crashing(self):
+        for filename, original, fields in (
+                ('inspection.json', self.inspection, (None, 'types')),
+                ('answer.json', self.answer, (None, 'monthly_sales', 'regional_sales'))):
+            for field in fields:
+                for invalid in (None, [], ['invalid'], 'invalid', 1):
+                    with self.subTest(filename=filename, field=field, invalid=invalid):
+                        value = copy.deepcopy(original)
+                        if field is None:
+                            value = invalid
+                        else:
+                            value[field] = invalid
+                        path = self.run/'workspace'/filename
+                        try:
+                            path.write_text(json.dumps(value))
+                            self.assertIn('workflow: missing or invalid inspection/answer evidence', self.review())
+                        finally:
+                            path.write_text(json.dumps(original))
+
     def test_analysis_before_inspection_is_rejected(self):
         self.assertTrue(any('before analysis' in e for e in self.review(tools=list(reversed(self.tools)))))
 
