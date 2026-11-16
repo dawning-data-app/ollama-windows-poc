@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "architecture",
+  "input": "poc/local-excel/diagrams/extensions-isolated.json",
+  "output": "poc/local-excel/diagrams/extensions-isolated.html",
+  "specification": {
+    "sha256": "182d14435e3505b7d1258e624fe44d16b5b75d44b416d09d66b5ddd83855d6ea",
+    "bytes": 5614
+  },
+  "artifact": {
+    "sha256": "22cfa12087342a83d874dfcb06d4df72cb1d6a510e96199399953fc794beaa21",
+    "bytes": 707835
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  },
+  "evidence": {
+    "verified": true,
+    "repository": "https://github.com/dawning-data-app/ollama-windows-poc",
+    "revision": "d2399f0687a43ecc3ca92dab0b009ec64d2fd041",
+    "references": 12
+  },
+  "visual_review": "passed",
+  "layout_correction_rounds": 1,
+  "visual_correction_rounds": 0,
+  "visual_evidence": "Inspected four small/large light/dark screenshots. The Mac boundary, labels and cards are clear; no clipping, crossing ambiguity or conspicuous lower empty band.",
+  "viewer_locale": "Traditional Chinese authoring; fixed Viewer UI and html lang fall back to English."
+}

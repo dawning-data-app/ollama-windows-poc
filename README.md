@@ -2,6 +2,10 @@
 
 先在 Mac 本機確認可以送出 request 並取得 Ollama API 回應，再由 Mac 對私人網路上的 Windows Ollama 發送相同請求。CLI 只使用 Python 標準函式庫。
 
+## 本機 Excel 分析 POC
+
+VS Code + OpenCode + Ollama + Qwen 的新情境，先 Mac E2E 再 Windows；使用 uv 與 openpyxl，獨立於既有 tinyllama CLI。請依 [操作教程](poc/local-excel/README.md) 與 [Python 實作邊界](poc/local-excel/docs/implementation.md)。
+
 ## 驗收
 
 - `GENERATED`：收到非空的模型回覆，請求成功。

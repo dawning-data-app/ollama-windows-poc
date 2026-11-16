@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File "/private/tmp/local-excel-extensions/runs/isolated/20261105T091434-ecdfbe5e/workspace/.venv/lib/python3.12/site-packages/openpyxl/__init__.py", line 7, in <module>
+    from openpyxl.workbook import Workbook
+  File "/private/tmp/local-excel-extensions/runs/isolated/20261105T091434-ecdfbe5e/workspace/.venv/lib/python3.12/site-packages/openpyxl/workbook/__init__.py", line 4, in <module>
+    from .workbook import Workbook
+  File "/private/tmp/local-excel-extensions/runs/isolated/20261105T091434-ecdfbe5e/workspace/.venv/lib/python3.12/site-packages/openpyxl/workbook/workbook.py", line 17, in <module>
+    from openpyxl.writer.excel import save_workbook
+  File "/private/tmp/local-excel-extensions/runs/isolated/20261105T091434-ecdfbe5e/workspace/.venv/lib/python3.12/site-packages/openpyxl/writer/excel.py", line 24, in <module>
+    from openpyxl.packaging.manifest import Manifest
+  File "/private/tmp/local-excel-extensions/runs/isolated/20261105T091434-ecdfbe5e/workspace/.venv/lib/python3.12/site-packages/openpyxl/packaging/manifest.py", line 26, in <module>
+    mimetypes = MimeTypes()
+                ^^^^^^^^^^^
+  File "/Users/andrew/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/mimetypes.py", line 74, in __init__
+    init()
+  File "/Users/andrew/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/mimetypes.py", line 384, in init
+    db.read(file)
+  File "/Users/andrew/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/mimetypes.py", line 217, in read
+    with open(filename, encoding='utf-8') as fp:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 1] Operation not permitted: '/etc/apache2/mime.types'

@@ -1,0 +1,18 @@
+{
+  "diagram_type": "workflow",
+  "output": "poc/local-excel/diagrams/workflow.html",
+  "specification": {
+    "sha256": "668d0054428d2fc698057fbf8841655643af4205cbaea5b6633c5da12c517aac",
+    "bytes": 3050
+  },
+  "artifact": {
+    "sha256": "9c22c3140a258dfce6d45dfcaee4375b13e3747c6f2161311a2a3f708becfa00",
+    "bytes": 700634
+  },
+  "validation": "9/9 showcase, 0 errors, 0 warnings",
+  "containment": "pass",
+  "visual_review": "passed",
+  "visual_correction_rounds": 1,
+  "review_evidence": "Inspected light/dark screenshots at 1440x900 and 2048x1320; labels, paths, cards and viewer fit.",
+  "viewer_locale": "Authored Traditional Chinese; fixed Viewer UI and html lang fall back to English."
+}

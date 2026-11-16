@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "architecture",
+  "input": "poc/local-excel/diagrams/extensions.json",
+  "output": "poc/local-excel/diagrams/extensions.html",
+  "specification": {
+    "sha256": "39b5549cca07742f986190e0bd4a316f4918b84392893150aaf76e49447829f2",
+    "bytes": 5332
+  },
+  "artifact": {
+    "sha256": "7850917a6a7f3fb905245422da53a2aef9361f77be12194043785ccc44c7ddd3",
+    "bytes": 706828
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  },
+  "evidence": {
+    "verified": true,
+    "repository": "https://github.com/dawning-data-app/ollama-windows-poc",
+    "revision": "709dd44080bf22a81f3097c7b33c1689ebb1bcb2",
+    "references": 11
+  },
+  "visual_review": "passed",
+  "visual_correction_rounds": 0,
+  "layout_correction_rounds": 1,
+  "visual_evidence": "Inspected all four small/large light/dark screenshots; no overlap, clipping or conspicuous lower empty band.",
+  "viewer_locale": "Traditional Chinese authoring; fixed Viewer UI and html lang fall back to English."
+}
