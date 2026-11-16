@@ -61,7 +61,7 @@ $Run = & $Py windows_poc.py prepare --interface chamber --case sales `
 ```powershell
 # 真正從 OpenChamber 側欄送出 workspace/prompt.txt 並目視工具及最終回答。
 & $Py windows_poc.py launch $Run
-# 回答完成並取得 GUI 證據後，停止本次 backend，再收同一 session。
+# 回答完成並取得 GUI 證據後，finish 會等待 backend 停止及模型收據寫完，再收同一 session。
 & $Py windows_poc.py finish $Run
 & $Py ide.py capture $Run
 & $Py ide.py capture $Run --session-id $SessionId

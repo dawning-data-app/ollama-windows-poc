@@ -1,5 +1,6 @@
 """Native Windows regressions; no policy provisioning or model calls."""
 
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from ctypes import wintypes
 from datetime import datetime, timedelta, timezone
 import json
@@ -9,6 +10,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from unittest.mock import patch
@@ -97,16 +99,56 @@ class WindowsTests(unittest.TestCase):
             self.assertFalse((self.evidence / "finish.request").exists())
 
             path.write_text(json.dumps(receipt), encoding="utf-8")
-            windows_poc.finish_gui(self.run)
-            self.assertTrue((self.evidence / "finish.request").is_file())
-            with self.assertRaisesRegex(RuntimeError, "Stop the owned OpenCode"):
-                windows_poc.export_session(self.run, ["session", "list"])
-            control.assert_not_called()
+            request = self.evidence / "finish.request"
+            observed = threading.Event()
+            stopped = threading.Event()
+            allow_evidence = threading.Event()
 
-            process.stop(0)
-            self.assertEqual(process.poll(3000), 0)
+            def run_backend(*args):
+                deadline = time.monotonic() + 3
+                while not request.is_file():
+                    if deadline <= time.monotonic():
+                        raise TimeoutError("No GUI finish request was written")
+                    time.sleep(0.01)
+                observed.set()
+                process.stop(0)
+                self.assertEqual(process.poll(3000), 0)
+                stopped.set()
+                self.assertTrue(allow_evidence.wait(3))
+                (self.evidence / "loaded-after.json").write_text('{"models": []}', encoding="utf-8")
+                return 0
+
+            with (patch("windows_poc.run_backend", side_effect=run_backend),
+                  patch("windows_poc.model.store", return_value=self.run / "models"),
+                  ThreadPoolExecutor(max_workers=2) as pool):
+                backend = pool.submit(windows_poc.guarded_backend, self.run, "official", [])
+                try:
+                    with self.assertRaisesRegex(RuntimeError, "Stop the owned OpenCode"):
+                        windows_poc.export_session(self.run, ["session", "list"])
+                    control.assert_not_called()
+                    finish = pool.submit(windows_poc.finish_gui, self.run)
+                    self.assertTrue(observed.wait(3))
+                    self.assertTrue(stopped.wait(3))
+                    with self.assertRaises(FutureTimeout):
+                        finish.result(timeout=0.2)
+                finally:
+                    allow_evidence.set()
+                self.assertEqual(backend.result(timeout=3), 0)
+                finish.result(timeout=3)
+            self.assertTrue((self.evidence / "loaded-after.json").is_file())
+            self.assertTrue((self.evidence / "finish.complete").is_file())
+            windows_poc.finish_gui(self.run)
             self.assertIs(windows_poc.export_session(self.run, ["session", "list"]), control.return_value)
             listeners.assert_not_called()
+
+    def test_finish_fails_if_shutdown_is_not_acknowledged(self):
+        receipt = {"run": self.run.name, "port": None, "pid": 1, "created_filetime": 1}
+        (self.evidence / "launch.json").write_text(json.dumps(receipt), encoding="utf-8")
+        with (patch("windows_poc.checked_run", return_value=(self.run, {"interface": "official"}, {})),
+              patch("windows_job.is_live", return_value=True),
+              patch("windows_poc.GUI_FINISH_TIMEOUT", 0)):
+            with self.assertRaisesRegex(TimeoutError, "post-run evidence"):
+                windows_poc.finish_gui(self.run)
 
     def test_backend_lease_creates_shared_directory_and_stays_exclusive(self):
         root = self.run / "poc-local"
@@ -129,7 +171,9 @@ class WindowsTests(unittest.TestCase):
                                "uv_cache", "uv_root", "opencode_root", "git_root", "python_root"), str(ripgrep))
 
         def command(argv, run, name, timeout, env):
-            if name == "opencode-version":
+            if name == "python-runtime":
+                self.assertEqual(argv[1:5], ["-I", "-X", "utf8", "-c"])
+            elif name == "opencode-version":
                 self.assertEqual((Path(env["XDG_CACHE_HOME"]) / "opencode/bin/rg.exe").read_bytes(),
                                  ripgrep.read_bytes())
                 (run / "evidence/opencode-version.stdout").write_text("1.19.5", encoding="utf-8")

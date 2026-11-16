@@ -24,6 +24,7 @@ LOCK_SHA = "02428609b416acb248ddbf9cde9ca2b9365c8237aff057ad0a9c9e3554d20926"
 RIPGREP_SHA = "8c121acc4d703ca62d394ab38a03771156370b7edeab0c379044482f07e133cf"
 RIPGREP_CACHE_PATH = "cache/opencode/bin/rg.exe"
 CHAMBER_PORT = 21435
+GUI_FINISH_TIMEOUT = 20
 PROFILES = {"official": "sst-dev.opencode@1.0.0", "chamber": "fedaykindev.openchamber@1.24.2"}
 CONTEXT_PROBE = "POC_CONTEXT_ONLY: synthetic Excel environment; no analysis or expected answers.\n"
 
@@ -130,7 +131,7 @@ def prepare(interface, case, runs_root, tools_root, git_root, deadline):
     command = [paths["uv"], "sync", "--locked", "--offline", "--python", paths["python"]]
     if poc.command(command, run, "uv-sync", 60, setup).returncode:
         raise RuntimeError("Locked Windows setup failed; see uv-sync.stderr")
-    command = [manifest["python_runtime"], "-I", "-c",
+    command = [manifest["python_runtime"], "-I", "-X", "utf8", "-c",
                "import openpyxl,shutil,sys; assert sys.version_info[:3]==(3,12,12); "
                "assert openpyxl.__version__=='3.1.5'; print(sys.executable); print(shutil.which('python3') or '')"]
     if poc.command(command, run, "python-runtime", 20, env).returncode:
@@ -175,7 +176,12 @@ def backend_lease(run, manifest):
 def guarded_backend(run, interface, args, *, limit=600, port=None, stdio=None):
     run, manifest, policy = checked_run(run, interface)
     with backend_lease(run, manifest):
-        return run_backend(run, manifest, policy, args, limit, port, stdio)
+        returncode = run_backend(run, manifest, policy, args, limit, port, stdio)
+    # Publish the acknowledgement after Job teardown and post-run evidence writes.
+    evidence = run / "evidence"
+    if returncode == 0 and interface in PROFILES and (evidence / "finish.request").is_file():
+        (evidence / "finish.complete").touch(exist_ok=False)
+    return returncode
 
 
 def run_backend(run, manifest, policy, args, limit, port, stdio):
@@ -221,6 +227,8 @@ def run_backend(run, manifest, policy, args, limit, port, stdio):
                                        on_stop=lambda: model.stop(manifest, service),
                                        stop_requested=(evidence / "finish.request").exists,
                                        requested_code=0)
+            if code == 0 and process.poll(3000) != 0:
+                raise RuntimeError("OpenCode backend did not complete a clean shutdown")
         if code != 124:
             poc.write_json(evidence / "loaded-after.json", poc.api("/api/ps", timeout=5))
         verify_inputs(run, manifest)
@@ -351,12 +359,22 @@ def finish_gui(run):
         raise ValueError("Only a completed GUI case can request a graceful finish")
     receipt = poc.read_json(boundary.safe_path(run, run / "evidence/launch.json"))
     port, pid = receipt["port"], receipt["pid"]
+    request = boundary.safe_path(run, run / "evidence/finish.request")
+    completed = boundary.safe_path(run, run / "evidence/finish.complete")
     if (receipt["run"] != run.name
-            or (port is None and manifest["interface"] != "official")
-            or (port is not None and watchdog.listeners(port) != [{"address": "127.0.0.1", "pid": pid}])
-            or not job.is_live(receipt)):
+            or (port is None and manifest["interface"] != "official")):
         raise RuntimeError("No matching active GUI backend to finish")
-    (run / "evidence/finish.request").touch(exist_ok=False)
+    if not request.is_file():
+        if (not job.is_live(receipt)
+                or (port is not None and watchdog.listeners(port) != [{"address": "127.0.0.1", "pid": pid}])):
+            raise RuntimeError("No matching active GUI backend to finish")
+        request.touch()
+    deadline = time.monotonic() + GUI_FINISH_TIMEOUT
+    while not completed.is_file():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("OpenCode shutdown and post-run evidence were not acknowledged")
+        time.sleep(min(0.1, remaining))
 
 
 def verify_review_paths(run, manifest):
