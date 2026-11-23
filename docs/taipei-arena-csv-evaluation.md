@@ -2,6 +2,8 @@
 
 EndUser 在自己的電腦使用 OpenCode。OpenCode 向 Windows Ollama Qwen 送出問題，收到工具呼叫後連到同一台 Windows 上的唯讀 MCP，再把工具結果交回 Qwen。原始 CSV 留在 Windows，查詢結果會經過 OpenCode。
 
+下載互動版 HTML 後，直接用瀏覽器開啟即可縮放與切換明暗主題。 [Archify 互動時序圖](diagrams/arena-query.html) · [靜態預覽](diagrams/arena-query.png)
+
 ```mermaid
 sequenceDiagram
     actor U as EndUser
