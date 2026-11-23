@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Windows Ollama",
+      "options": { "baseURL": "{env:ARENA_OLLAMA_BASE_URL}" },
+      "models": { "qwen3.5:9b": { "name": "Windows Qwen 3.5 9B", "tool_call": true } }
+    }
+  },
+  "enabled_providers": ["ollama"],
+  "model": "ollama/qwen3.5:9b",
+  "small_model": "ollama/qwen3.5:9b",
+  "mcp": {
+    "arena": {
+      "type": "remote",
+      "url": "{env:ARENA_CSV_MCP_URL}",
+      "oauth": false,
+      "headers": { "Authorization": "Bearer {env:ARENA_CSV_MCP_TOKEN}" }
+    }
+  },
+  "permission": {
+    "*": "deny",
+    "arena_read_arena_csv": "allow"
+  }
+}
