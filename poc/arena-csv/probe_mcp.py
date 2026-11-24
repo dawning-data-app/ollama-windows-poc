@@ -50,7 +50,7 @@ async def probe(url, token):
         async with ClientSession(reader, writer) as session:
             await session.initialize()
             tools = await session.list_tools()
-            require([tool.name for tool in tools.tools] == [TOOL], "MCP 工具清單不符")
+            require(TOOL in {tool.name for tool in tools.tools}, "MCP 缺少原始 CSV 讀取工具")
             for months, expected in (
                 (["2026-01"], {f"{PREFIX}202601_V2.csv": list(range(2, 7))}),
                 (["2026-07", "2026-08"], {

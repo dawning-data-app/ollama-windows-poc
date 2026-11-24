@@ -1,0 +1,55 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Windows Ollama",
+      "options": {
+        "baseURL": "{env:ARENA_OLLAMA_BASE_URL}"
+      },
+      "models": {
+        "qwen3.5:9b": {
+          "name": "Windows Qwen 3.5 9B",
+          "tool_call": true,
+          "temperature": true,
+          "options": {
+            "reasoningEffort": "none"
+          },
+          "limit": {
+            "context": 4096,
+            "output": 1024
+          }
+        }
+      }
+    }
+  },
+  "enabled_providers": [
+    "ollama"
+  ],
+  "model": "ollama/qwen3.5:9b",
+  "small_model": "ollama/qwen3.5:9b",
+  "default_agent": "arena-qa",
+  "agent": {
+    "arena-qa": {
+      "description": "Taipei Arena monthly counts",
+      "mode": "primary",
+      "temperature": 0,
+      "prompt": "你是臺北小巨蛋租用統計助手。統計題須先呼叫 arena_analyze_arena_csv，operation 使用 counts，months 依題目列出全部月份。收到成功結果後，以繁體中文列出各類型筆數、總筆數、筆數最多月份及其筆數，並附涵蓋月份。只採用工具回傳的統計值。工具不可用或失敗時說無法查證。"
+    }
+  },
+  "mcp": {
+    "arena": {
+      "type": "remote",
+      "url": "{env:ARENA_CSV_MCP_URL}",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:ARENA_CSV_MCP_TOKEN}"
+      }
+    }
+  },
+  "permission": {
+    "*": "deny",
+    "arena_read_arena_csv": "deny",
+    "arena_analyze_arena_csv": "allow"
+  }
+}

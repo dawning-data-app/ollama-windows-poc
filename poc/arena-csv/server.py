@@ -14,6 +14,7 @@ from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 
+from arena_analysis import Operation, summarize
 from arena_csv import CsvRead, read_snapshot
 
 LOG = logging.getLogger("arena_csv_mcp")
@@ -23,11 +24,21 @@ class ToolResult(CsvRead):
     read_id: str
 
 
+class AnalysisResult(TypedDict):
+    read_id: str
+    available_months: list[str]
+    missing_months: list[str]
+    operation: Operation
+    result: dict[str, object]
+
+
 class CsvMCP(FastMCP):
     async def call_tool(self, name, arguments):
         # FastMCP 1.x otherwise lets its validator discard extra arguments.
         if name == "read_arena_csv" and arguments.keys() != {"months"}:
             raise ToolError("read_arena_csv 只接受 months 參數。")
+        if name == "analyze_arena_csv" and arguments.keys() != {"months", "operation"}:
+            raise ToolError("analyze_arena_csv 只接受 months 和 operation 參數。")
         return await super().call_tool(name, arguments)
 
 
@@ -62,9 +73,7 @@ def create_server(root: Path, token: str, port: int) -> FastMCP:
         ),
     )
 
-    @server.tool()
-    def read_arena_csv(months: list[str]) -> ToolResult:
-        """讀取臺北小巨蛋場地租用 CSV。months 是 2026 年 YYYY-MM 清單。回傳來源、租用紀錄與未涵蓋月份。"""
+    def read_with_receipt(months: list[str]) -> ToolResult:
         read_id = uuid4().hex
         try:
             result = read_snapshot(root, months)
@@ -77,6 +86,23 @@ def create_server(root: Path, token: str, port: int) -> FastMCP:
             read_id, sorted(set(months)), result["available_months"], result["missing_months"], dict(file_counts),
         )
         return {**result, "read_id": read_id}
+
+    @server.tool()
+    def read_arena_csv(months: list[str]) -> ToolResult:
+        """讀取臺北小巨蛋場地租用 CSV。months 是 2026 年 YYYY-MM 清單。回傳來源、租用紀錄與未涵蓋月份。"""
+        return read_with_receipt(months)
+
+    @server.tool()
+    def analyze_arena_csv(months: list[str], operation: Operation) -> AnalysisResult:
+        """依指定月份運算。counts：逐列統計類型及月份；overlaps：列出至少兩筆涵蓋的日期；uncovered：列出未被租用紀錄涵蓋的日期，實際可租性仍未知。"""
+        snapshot = read_with_receipt(months)
+        return {
+            "read_id": snapshot["read_id"],
+            "available_months": snapshot["available_months"],
+            "missing_months": snapshot["missing_months"],
+            "operation": operation,
+            "result": summarize(snapshot, months, operation),
+        }
 
     return server
 
