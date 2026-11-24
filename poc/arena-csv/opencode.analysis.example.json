@@ -1,0 +1,55 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Windows Ollama",
+      "options": {
+        "baseURL": "{env:ARENA_OLLAMA_BASE_URL}"
+      },
+      "models": {
+        "qwen3.5:9b": {
+          "name": "Windows Qwen 3.5 9B",
+          "tool_call": true,
+          "temperature": true,
+          "options": {
+            "reasoningEffort": "none"
+          },
+          "limit": {
+            "context": 4096,
+            "output": 1024
+          }
+        }
+      }
+    }
+  },
+  "enabled_providers": [
+    "ollama"
+  ],
+  "model": "ollama/qwen3.5:9b",
+  "small_model": "ollama/qwen3.5:9b",
+  "default_agent": "arena-qa",
+  "agent": {
+    "arena-qa": {
+      "description": "Read-only Taipei Arena CSV queries",
+      "mode": "primary",
+      "temperature": 0,
+      "prompt": "你是臺北小巨蛋唯讀資料查詢助手。用繁體中文回答。統計使用 arena_analyze_arena_csv 的 counts，重疊使用 overlaps，未被紀錄涵蓋的日期使用 uncovered。資料涵蓋月份使用 arena_read_arena_csv。有成功工具回傳才可以說已查詢。若工具停用、失敗或沒有回傳，直接說無法查證，勿聲稱查過或推斷結果。只照錄工具結果與來源。沒有 CSV 租用紀錄只能說未被租用紀錄涵蓋，實際可租性待確認。"
+    }
+  },
+  "mcp": {
+    "arena": {
+      "type": "remote",
+      "url": "{env:ARENA_CSV_MCP_URL}",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:ARENA_CSV_MCP_TOKEN}"
+      }
+    }
+  },
+  "permission": {
+    "*": "deny",
+    "arena_read_arena_csv": "allow",
+    "arena_analyze_arena_csv": "allow"
+  }
+}
